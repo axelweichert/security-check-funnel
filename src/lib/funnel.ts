@@ -15,7 +15,7 @@ export interface Question {
   options: Answer[];
   isMultiPart?: boolean;
 }
-export type AnswersState = Record<QuestionId, AnswerId | null>;
+export type AnswersState = Record<QuestionId, AnswerId>;
 export interface FunnelState {
   answers: AnswersState;
   setAnswer: (questionId: QuestionId, answerId: AnswerId) => void;
@@ -23,9 +23,9 @@ export interface FunnelState {
 }
 // --- INITIAL STATE & STORE ---
 const initialAnswers: AnswersState = {
-  'L1-A': null, 'L1-B': null, 'L1-C': null,
-  'L2-A1': null, 'L2-A2': null, 'L2-B1': null, 'L2-B2': null, 'L2-C1': null,
-  'L3-A1': null, 'L3-A1-ALT': null, 'L3-B1': null, 'L3-C1': null,
+  'L1-A': '', 'L1-B': '', 'L1-C': '',
+  'L2-A1': '', 'L2-A2': '', 'L2-B1': '', 'L2-B2': '', 'L2-C1': '',
+  'L3-A1': '', 'L3-A1-ALT': '', 'L3-B1': '', 'L3-C1': '',
 };
 export const useFunnelStore = create<FunnelState>()(
   persist(

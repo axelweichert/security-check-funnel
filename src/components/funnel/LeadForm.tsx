@@ -25,7 +25,7 @@ import { AreaScores } from "@/lib/funnel";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Lead } from "@shared/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,7 +99,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold font-display text-foreground">Dein Ergebnis als Grundlage für konkrete Maßnahmen</h2>
         <p className="text-muted-foreground mt-2 text-lg">
-          Trage deine Kontaktdaten ein �� wir melden uns mit einer individuellen Einschätzung und konkreten Vorschlägen für dein Unternehmen.
+          Trage deine Kontaktdaten ein <Heart className="inline h-4 w-4 text-red-500" /> wir melden uns mit einer individuellen Einschätzung und konkreten Vorschlägen für dein Unternehmen.
         </p>
       </div>
       <Form {...form}>

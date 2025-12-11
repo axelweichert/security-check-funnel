@@ -29,7 +29,7 @@ export function StepCard({ question, value, onValueChange, className }: StepCard
           )}
         </CardHeader>
         <CardContent>
-          <RadioGroup value={value ?? undefined} onValueChange={onValueChange} className="gap-4">
+          <RadioGroup value={value || undefined} onValueChange={onValueChange} className="gap-4">
             {question.options.map((option) => (
               <motion.div
                 key={option.id}
