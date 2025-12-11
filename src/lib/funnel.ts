@@ -45,6 +45,7 @@ export const useFunnelStore = create<FunnelState>()(
 );
 // --- QUESTIONS DATA ---
 // This is a static object, effectively memoized at the module level. No need for useMemo in components.
+/* UTF-8: Ensure ß/��/ü render correctly in all environments */
 export const questions: Record<QuestionId, Question> = {
   // Level 1
   'L1-A': {
@@ -126,7 +127,7 @@ export const questions: Record<QuestionId, Question> = {
       { id: 'L2-C1-1', text: 'Ja, mehrere', score: 0 },
       { id: 'L2-C1-2', text: 'Ja, ein einzelner Vorfall', score: 1 },
       { id: 'L2-C1-3', text: 'Nein, keine bekannten Vorfälle', score: 2 },
-      { id: 'L2-C1-4', text: 'Wir wissen es nicht genau / k��nnte sein', score: 0 },
+      { id: 'L2-C1-4', text: 'Wir wissen es nicht genau / könnte sein', score: 0 },
     ],
   },
   // Level 3
@@ -244,7 +245,7 @@ export function deriveOverallLabel(averageScore: number): { headline: string; su
 }
 export const areaDetails = {
   areaA: { title: 'VPN / Remote Access', description: 'Sicherheit und Performance für deine Remote-Mitarbeitenden.' },
-  areaB: { title: 'Web & Online-Prozesse', description: 'Schutz deiner Webseiten und geschäftskritischen Anwendungen.' },
+  areaB: { title: 'Web & Online-Prozesse', description: 'Schutz deiner Webseiten und gesch��ftskritischen Anwendungen.' },
   areaC: { title: 'Mitarbeiter-Sicherheit (Awareness)', description: 'Die menschliche Firewall deines Unternehmens stärken.' },
 };
 // Concise texts for better screen reader experience.

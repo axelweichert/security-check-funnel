@@ -81,7 +81,8 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
         <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
         <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
-        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich unterstützen k��nnen." />
+        {/* UTF-8 Verification: ö in 'können' must render correctly in Chrome/Firefox/Safari */}
+        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich konkret unterstützen können." />
     </div>
     <div className="text-center space-y-4 pt-8">
         <p className="text-muted-foreground">Dauer: ca. 2–3 Minuten</p>
@@ -146,7 +147,7 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
         ))}
       </motion.div>
       <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" onClick={onBack} aria-label="Zurück zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
+        <Button variant="outline" onClick={onBack} aria-label="Zur��ck zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
         <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient" aria-label="Weiter zum nächsten Schritt">Weiter</Button>
       </div>
     </motion.div>
