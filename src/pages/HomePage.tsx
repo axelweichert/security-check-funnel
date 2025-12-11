@@ -199,13 +199,14 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
 };
 const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title: string, label: any, text: string }) => (
   <Card className="flex flex-col glass">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-base font-medium">{title}</CardTitle>
-      <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
+    {/* Client Feedback: Prevented line wrapping on area titles (e.g., areaC) with nowrap/flex-shrink, adjusted sizing/padding for responsive polish without text changes. */}
+    <CardHeader className="flex flex-row flex-nowrap items-center justify-between space-y-0 pb-4 px-6">
+      <CardTitle className="text-sm md:text-base font-medium whitespace-nowrap truncate">{title}</CardTitle>
+      <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="flex-shrink-0 ml-4">
         {icon}
       </motion.div>
     </CardHeader>
-    <CardContent className="flex-grow flex flex-col justify-between">
+    <CardContent className="flex-grow flex flex-col justify-between px-6 pb-6">
       <div>
         <div className={cn("text-sm font-bold px-2 py-1 rounded-full inline-block", label.bgColor, label.color)}>
           {label.text}
