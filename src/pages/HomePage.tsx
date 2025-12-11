@@ -97,7 +97,6 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
         <Button size="lg" className="btn-gradient px-10 py-6 text-xl font-semibold shadow-lg hover:shadow-primary/80 transition-all duration-300 hover:-translate-y-1" onClick={onStart} aria-label="Security-Check starten">
             Jetzt Security-Check starten
         </Button>
-        <p className="text-sm text-muted-foreground pt-4">von Busch GmbH – IT-Solutions & Security <br/> In Kooperation mit Cloudflare und HXNWRK</p>
     </div>
     <Footer />
   </motion.div>
