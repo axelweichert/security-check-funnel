@@ -1,138 +1,212 @@
-// Home page of the app.
-// Currently a demo placeholder "please wait" screen.
-// Replace this file with your actual app UI. Do not delete it to use some other file as homepage. Simply replace the entire contents of this file.
-
-import { useEffect, useMemo, useState } from 'react'
-import { Sparkles } from 'lucide-react'
-
-import { ThemeToggle } from '@/components/ThemeToggle'
-import { HAS_TEMPLATE_DEMO, TemplateDemo } from '@/components/TemplateDemo'
-import { Button } from '@/components/ui/button'
-import { Toaster, toast } from '@/components/ui/sonner'
-
-function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
+import { useState, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Toaster } from '@/components/ui/sonner';
+import { StepCard } from '@/components/funnel/StepCard';
+import { ProgressStepper } from '@/components/funnel/ProgressStepper';
+import { LeadForm } from '@/components/funnel/LeadForm';
+import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, areaDetails, resultTexts } from '@/lib/funnel';
+import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
 export function HomePage() {
-  const [coins, setCoins] = useState(0)
-  const [isRunning, setIsRunning] = useState(false)
-  const [startedAt, setStartedAt] = useState<number | null>(null)
-  const [elapsedMs, setElapsedMs] = useState(0)
-
-  useEffect(() => {
-    if (!isRunning || startedAt === null) return
-
-    const t = setInterval(() => {
-      setElapsedMs(Date.now() - startedAt)
-    }, 250)
-
-    return () => clearInterval(t)
-  }, [isRunning, startedAt])
-
-  const formatted = useMemo(() => formatDuration(elapsedMs), [elapsedMs])
-
-  const onPleaseWait = () => {
-    setCoins((c) => c + 1)
-
-    if (!isRunning) {
-      // Resume from the current elapsed time
-      setStartedAt(Date.now() - elapsedMs)
-      setIsRunning(true)
-      toast.success('Building your app…', {
-        description: "Hang tight — we're setting everything up.",
-      })
-      return
+  const [step, setStep] = useState<FunnelStep>('start');
+  const answers = useFunnelStore(s => s.answers);
+  const setAnswer = useFunnelStore(s => s.setAnswer);
+  const resetFunnel = useFunnelStore(s => s.reset);
+  const scores = useMemo(() => {
+    const areaScores = computeAreaScores(answers);
+    const average = computeAverageScore(areaScores);
+    return { ...areaScores, average };
+  }, [answers]);
+  const l1aAnswer = answers['L1-A'];
+  const l1bAnswer = answers['L1-B'];
+  const level2Questions = [
+    (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A1'],
+    (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A2'],
+    (l1bAnswer === 'L1-B-1' || l1bAnswer === 'L1-B-2') && questions['L2-B1'],
+    (l1bAnswer === 'L1-B-1' || l1bAnswer === 'L1-B-2') && questions['L2-B2'],
+    questions['L2-C1'],
+  ].filter(Boolean);
+  const level3Questions = [
+    (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') ? questions['L3-A1'] : questions['L3-A1-ALT'],
+    questions['L3-B1'],
+    questions['L3-C1'],
+  ].filter(Boolean);
+  const isLevel1Complete = answers['L1-A'] && answers['L1-B'] && answers['L1-C'];
+  const isLevel2Complete = level2Questions.every(q => q && answers[q.id]);
+  const isLevel3Complete = level3Questions.every(q => q && answers[q.id]);
+  const renderContent = () => {
+    switch (step) {
+      case 'start': return <StartScreen onStart={() => setStep('level1')} />;
+      case 'level1': return <QuizStep key="level1" stepIndex={0} title="Basis-Check" questions={[questions['L1-A'], questions['L1-B'], questions['L1-C']]} onBack={() => setStep('start')} onNext={() => setStep('level2')} isNextDisabled={!isLevel1Complete} />;
+      case 'level2': return <QuizStep key="level2" stepIndex={1} title="Details zu deiner Umgebung" questions={level2Questions} onBack={() => setStep('level1')} onNext={() => setStep('level3')} isNextDisabled={!isLevel2Complete} />;
+      case 'level3': return <QuizStep key="level3" stepIndex={2} title="Einschätzung deiner Reifegrade" questions={level3Questions} onBack={() => setStep('level2')} onNext={() => setStep('results')} isNextDisabled={!isLevel3Complete} />;
+      case 'results': return <ResultsScreen scores={scores} onNext={() => setStep('form')} />;
+      case 'form': return <LeadForm scores={scores} onSuccess={() => setStep('thanks')} />;
+      case 'thanks': return <ThanksScreen onReset={() => { resetFunnel(); setStep('start'); }} />;
+      default: return <StartScreen onStart={() => setStep('level1')} />;
     }
-
-    setIsRunning(false)
-    toast.info('Still working…', {
-      description: 'You can come back in a moment.',
-    })
-  }
-
-  const onReset = () => {
-    setCoins(0)
-    setIsRunning(false)
-    setStartedAt(null)
-    setElapsedMs(0)
-    toast('Reset complete')
-  }
-
-  const onAddCoin = () => {
-    setCoins((c) => c + 1)
-    toast('Coin added')
-  }
-
+  };
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden relative">
-      <ThemeToggle />
-      <div className="absolute inset-0 bg-gradient-rainbow opacity-10 dark:opacity-20 pointer-events-none" />
-
-      <div className="text-center space-y-8 relative z-10 animate-fade-in w-full">
-        <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-primary floating">
-            <Sparkles className="w-8 h-8 text-white rotating" />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
-            Creating your <span className="text-gradient">app</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto text-pretty">
-            Your application would be ready soon.
-          </p>
-        </div>
-
-        {HAS_TEMPLATE_DEMO ? (
-          <div className="max-w-5xl mx-auto text-left">
-            <TemplateDemo />
-          </div>
-        ) : (
-          <>
-            <div className="flex justify-center gap-4">
-              <Button
-                size="lg"
-                onClick={onPleaseWait}
-                className="btn-gradient px-8 py-4 text-lg font-semibold hover:-translate-y-0.5 transition-all duration-200"
-                aria-live="polite"
-              >
-                Please Wait
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div>
-                Time elapsed:{' '}
-                <span className="font-medium tabular-nums text-foreground">{formatted}</span>
-              </div>
-              <div>
-                Coins:{' '}
-                <span className="font-medium tabular-nums text-foreground">{coins}</span>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={onReset}>
-                Reset
-              </Button>
-              <Button variant="outline" size="sm" onClick={onAddCoin}>
-                Add Coin
-              </Button>
-            </div>
-          </>
-        )}
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased relative">
+      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-slate-950 dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)]">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-20 dark:opacity-30"></div>
       </div>
-
-      <footer className="absolute bottom-8 text-center text-muted-foreground/80">
-        <p>Powered by Cloudflare</p>
-      </footer>
-
+      <ThemeToggle className="fixed top-4 right-4" />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="py-8 md:py-10 lg:py-12">
+          <AnimatePresence mode="wait">
+            {renderContent()}
+          </AnimatePresence>
+        </div>
+      </main>
       <Toaster richColors closeButton />
     </div>
-  )
+  );
 }
+const StartScreen = ({ onStart }: { onStart: () => void }) => (
+  <motion.div
+    key="start"
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.9 }}
+    transition={{ duration: 0.5, ease: "easeInOut" }}
+    className="text-center flex flex-col items-center space-y-8"
+  >
+    <div className="space-y-4 max-w-4xl">
+      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display text-foreground">
+        Wie widerstandsfähig ist dein Unternehmen gegen Cyberangriffe?
+      </h1>
+      <p className="text-lg md:text-xl text-muted-foreground text-balance">
+        Kurzer 3-Stufen-Check zu VPN, Web-Anwendungen und Mitarbeiter-Sicherheit – mit konkreten Handlungsempfehlungen.
+      </p>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full pt-8">
+        <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
+        <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
+        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich unterstützen können." />
+    </div>
+    <div className="text-center space-y-4 pt-8">
+        <p className="text-muted-foreground">Dauer: ca. 2–3 Minuten</p>
+        <Button size="lg" className="btn-gradient px-10 py-6 text-xl font-semibold shadow-lg hover:shadow-primary/80 transition-all duration-300 hover:-translate-y-1" onClick={onStart}>
+            Jetzt Security-Check starten
+        </Button>
+        <p className="text-sm text-muted-foreground pt-4">von Busch GmbH – IT-Solutions & Security <br/> In Kooperation mit Cloudflare und HXNWRK</p>
+    </div>
+  </motion.div>
+);
+const InfoCard = ({ icon, title, text }: { icon: React.ReactNode, title: string, text: string }) => (
+    <div className="bg-card/80 backdrop-blur-sm p-6 rounded-xl border shadow-soft text-center flex flex-col items-center">
+        <div className="mb-4">{icon}</div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+        <p className="text-muted-foreground text-sm">{text}</p>
+    </div>
+);
+const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: (Question | false)[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
+  const answers = useFunnelStore(s => s.answers);
+  const setAnswer = useFunnelStore(s => s.setAnswer);
+  const visibleQuestions = questions.filter((q): q is Question => !!q);
+  return (
+    <motion.div
+      key={`step-${stepIndex}`}
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      transition={{ duration: 0.4, ease: "easeInOut" }}
+      className="max-w-3xl mx-auto space-y-8"
+    >
+      <ProgressStepper currentStep={stepIndex} totalSteps={3} stepTitle={title} />
+      <div className="space-y-6">
+        {visibleQuestions.map(q => (
+          <StepCard key={q.id} question={q} value={answers[q.id]} onValueChange={(val) => setAnswer(q.id, val)} />
+        ))}
+      </div>
+      <div className="flex justify-between items-center pt-4">
+        <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
+        <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient">Weiter</Button>
+      </div>
+    </motion.div>
+  );
+};
+const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) => {
+  const overall = deriveOverallLabel(scores.average);
+  const areaALabel = deriveAreaLabel(scores.areaA);
+  const areaBLabel = deriveAreaLabel(scores.areaB);
+  const areaCLabel = deriveAreaLabel(scores.areaC);
+  return (
+    <motion.div
+      key="results"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="max-w-4xl mx-auto space-y-10"
+    >
+      <div className="text-center space-y-3">
+        <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">{overall.headline}</h2>
+        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">{overall.summary}</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ResultCard icon={<Wifi />} title={areaDetails.areaA.title} label={areaALabel} text={resultTexts[areaALabel.level]} />
+        <ResultCard icon={<Shield />} title={areaDetails.areaB.title} label={areaBLabel} text={resultTexts[areaBLabel.level]} />
+        <ResultCard icon={<Users />} title={areaDetails.areaC.title} label={areaCLabel} text={resultTexts[areaCLabel.level]} />
+      </div>
+      <Card className="shadow-soft">
+        <CardHeader><CardTitle>Wie wir dich unterstützen können</CardTitle></CardHeader>
+        <CardContent className="space-y-4 text-muted-foreground">
+          <p>Mit der Kombination aus Cloudflare, Ubiquiti, HXNWRK und von Busch bringen wir dein Unternehmen auf ein neues Sicherheits- und Performance-Level:</p>
+          <ul className="list-disc list-inside space-y-2">
+            <li><strong className="text-foreground">Cloudflare Connectivity Cloud:</strong> Zero Trust, Schutz für Web-Anwendungen (WAF, DDoS), sichere Konnektivität.</li>
+            <li><strong className="text-foreground">Ubiquiti-Hardware:</strong> Moderne Netzwerk-Infrastruktur als solide Basis.</li>
+            <li><strong className="text-foreground">HXNWRK & von Busch:</strong> Planung, Implementierung und Betrieb moderner Architekturen.</li>
+          </ul>
+          <p>Auf Wunsch erhältst du eine individuelle Auswertung deines Checks und konkrete Handlungsempfehlungen – zugeschnitten auf deine Umgebung.</p>
+        </CardContent>
+      </Card>
+      <div className="text-center pt-6">
+        <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext}>
+          Individuelle Auswertung & Beratung anfordern
+        </Button>
+      </div>
+    </motion.div>
+  );
+};
+const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title: string, label: any, text: string }) => (
+  <Card className="flex flex-col shadow-soft">
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-base font-medium">{title}</CardTitle>
+      {icon}
+    </CardHeader>
+    <CardContent className="flex-grow flex flex-col justify-between">
+      <div>
+        <div className={cn("text-sm font-bold px-2 py-1 rounded-full inline-block", label.bgColor, label.color)}>
+          {label.text}
+        </div>
+        <p className="text-sm text-muted-foreground mt-3">{text}</p>
+      </div>
+    </CardContent>
+  </Card>
+);
+const ThanksScreen = ({ onReset }: { onReset: () => void }) => (
+  <motion.div
+    key="thanks"
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.5 }}
+    className="text-center max-w-2xl mx-auto space-y-6 py-16"
+  >
+    <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+    <h2 className="text-4xl font-bold font-display">Vielen Dank – wir melden uns bei dir!</h2>
+    <p className="text-lg text-muted-foreground">
+      Deine Angaben sind bei uns eingegangen. Unsere Spezialisten von von Busch / HXNWRK melden sich zeitnah bei dir, um dein Ergebnis im Detail zu besprechen und dir konkrete Optionen mit Cloudflare & Ubiquiti zu zeigen.
+    </p>
+    <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+      <Button asChild size="lg" variant="outline">
+        <a href="https://www.vonbusch.digital" target="_blank" rel="noopener noreferrer">Website von Busch besuchen</a>
+      </Button>
+      <Button size="lg" className="btn-gradient" onClick={onReset}>Neuen Check starten</Button>
+    </div>
+  </motion.div>
+);

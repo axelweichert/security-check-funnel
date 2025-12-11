@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Question, AnswerId } from "@/lib/funnel";
-
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 interface StepCardProps {
   question: Question;
@@ -12,7 +12,13 @@ interface StepCardProps {
 }
 export function StepCard({ question, value, onValueChange, className }: StepCardProps) {
   return (
-    <div className={cn("w-full animate-in fade-in-10 slide-in-from-bottom-2 duration-300", className)}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className={cn("w-full", className)}
+    >
       <Card className="w-full shadow-soft overflow-hidden">
         <CardHeader>
           <CardTitle className="text-xl md:text-2xl font-semibold text-foreground">{question.text}</CardTitle>
@@ -25,10 +31,12 @@ export function StepCard({ question, value, onValueChange, className }: StepCard
         <CardContent>
           <RadioGroup value={value ?? undefined} onValueChange={onValueChange} className="gap-4">
             {question.options.map((option) => (
-                <div
-                  key={option.id}
-                  className="w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                >
+              <motion.div
+                key={option.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full"
+              >
                 <Label
                   htmlFor={option.id}
                   className={cn(
@@ -41,11 +49,11 @@ export function StepCard({ question, value, onValueChange, className }: StepCard
                   <RadioGroupItem value={option.id} id={option.id} />
                   <span className="text-base font-medium text-foreground">{option.text}</span>
                 </Label>
-                </div>
+              </motion.div>
             ))}
           </RadioGroup>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
