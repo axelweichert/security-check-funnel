@@ -17,8 +17,9 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     // Set document language for accessibility
     document.documentElement.lang = 'de';
     // Update title, ensuring it overrides any other values.
-    if (document.title !== title) {
-      document.title = title;
+    const finalTitle = title + ' | von Busch Security';
+    if (document.title !== finalTitle) {
+      document.title = finalTitle;
     }
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');

@@ -34,8 +34,8 @@ let root: Root | null = null;
 function renderApp() {
   const app = (
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <QueryClientProvider client={queryClient}>
           <Layout>
             <ErrorBoundary>
               <Suspense fallback={<Skeleton className="h-screen w-screen rounded-none" />}>
@@ -43,8 +43,8 @@ function renderApp() {
               </Suspense>
             </ErrorBoundary>
           </Layout>
-        </ThemeProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </StrictMode>
   );
   if (import.meta.hot) {

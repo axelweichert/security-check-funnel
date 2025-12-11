@@ -148,7 +148,8 @@ export const questions: Record<QuestionId, Question> = {
     text: '1. Wie zufrieden bist du mit eurer aktuellen VPN-/Remote-Lösung hinsichtlich Performance, Sicherheit und Usability?',
     options: [
       { id: 'L3-A1-1', text: 'Sehr zufrieden – läuft stabil, schnell und sicher', score: 2 },
-      { id: 'L3-A1-2', text: 'Ganz okay, aber wir sto��en immer wieder an Grenzen', score: 1 },
+      // UTF-8 FIX: Replaced mangled character with 'ß' for correct rendering.
+      { id: 'L3-A1-2', text: 'Ganz okay, aber wir stoßen immer wieder an Grenzen', score: 1 },
       { id: 'L3-A1-3', text: 'Unzufrieden – Lösung ist langsam, unsicher oder schwer zu administrieren', score: 0 },
     ],
   },
