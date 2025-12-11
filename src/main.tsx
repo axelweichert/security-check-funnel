@@ -14,7 +14,6 @@ import '@/index.css'
 import { Layout } from '@/components/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ThemeProvider } from 'next-themes';
-{/* ThemeProvider added to resolve useContext errors in Toaster/sonner */}
 const HomePage = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.HomePage })));
 const AdminPage = lazy(() => import('@/pages/AdminPage').then(module => ({ default: module.AdminPage })));
 const queryClient = new QueryClient();
@@ -33,15 +32,15 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <Layout>
-        <ErrorBoundary>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <Layout>
+          <ErrorBoundary>
             <Suspense fallback={<Skeleton className="h-screen w-screen rounded-none" />}>
               <RouterProvider router={router} />
             </Suspense>
-          </ThemeProvider>
-        </ErrorBoundary>
-      </Layout>
+          </ErrorBoundary>
+        </Layout>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

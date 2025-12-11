@@ -16,8 +16,10 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   useEffect(() => {
     // Set document language for accessibility
     document.documentElement.lang = 'de';
-    // Update title
-    document.title = title;
+    // Update title, ensuring it overrides any other values.
+    if (document.title !== title) {
+      document.title = title;
+    }
     // Update meta description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
