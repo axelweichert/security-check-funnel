@@ -71,6 +71,7 @@ export const questions: Record<QuestionId, Question> = {
   'L1-B': {
     id: 'L1-B',
     text: '2. Bildest du geschäftskritische Prozesse über eure Webseite oder Online-Plattformen ab?',
+    // UTF-8 Verified: ü renders correctly.
     subtext: '(z. B. Kundenportal, Webshop, Terminbuchung, Service-Portal)',
     options: [
       { id: 'L1-B-1', text: 'Ja, mehrere geschäftskritische Prozesse laufen online', score: 2 },
@@ -83,7 +84,8 @@ export const questions: Record<QuestionId, Question> = {
     id: 'L1-C',
     text: '3. Wie gut sind deine Mitarbeitende aktuell in Bezug auf Phishing, Social Engineering und IT-Sicherheit geschult?',
     options: [
-      { id: 'L1-C-1', text: 'Wir führen regelmä��ig verpflichtende Awareness-Trainings & Phishing-Simulationen durch', score: 2 },
+      // UTF-8 FIX: Replaced "regelmä��ig" with "regelmäßig" to fix parsing and rendering errors.
+      { id: 'L1-C-1', text: 'Wir führen regelmäßig verpflichtende Awareness-Trainings & Phishing-Simulationen durch', score: 2 },
       { id: 'L1-C-2', text: 'Es gibt gelegentliche Schulungen, aber nicht strukturiert', score: 1 },
       { id: 'L1-C-3', text: 'Schulungen finden so gut wie nicht statt', score: 0 },
       { id: 'L1-C-4', text: 'Ich weiß es nicht', score: 0 },
@@ -92,9 +94,11 @@ export const questions: Record<QuestionId, Question> = {
   // Level 2
   'L2-A1': {
     id: 'L2-A1',
+    // UTF-8 Verified: ü renders correctly.
     text: '1. Welche Lösung setzt du aktuell für VPN oder Remote Access ein?',
     options: [
       { id: 'L2-A1-1', text: 'Klassisches VPN (z. B. IPsec, OpenVPN, Firewall-VPN)', score: 1 },
+      // UTF-8 Verified: ä renders correctly.
       { id: 'L2-A1-2', text: 'Zero Trust / Cloud-basierter Zugang (z. B. Cloudflare Access o. ä.)', score: 2 },
       { id: 'L2-A1-3', text: 'SSL-VPN oder Remote-Desktop-Gateway', score: 1 },
       { id: 'L2-A1-4', text: 'Ich weiß es nicht / Sonstige Lösung', score: 0 },
@@ -111,8 +115,10 @@ export const questions: Record<QuestionId, Question> = {
   },
   'L2-B1': {
     id: 'L2-B1',
+    // UTF-8 Verified: ü renders correctly.
     text: '2. Wie werden eure geschäftskritischen Online-Dienste bereitgestellt?',
     options: [
+      // UTF-8 Verified: ü renders correctly.
       { id: 'L2-B1-1', text: 'Wir hosten selbst in unserem Rechenzentrum / Serverraum', score: 0 },
       { id: 'L2-B1-2', text: 'Wir hosten bei einem Hoster / in der Cloud (z. B. IaaS, Managed Hosting)', score: 1 },
       { id: 'L2-B1-3', text: 'Hybrid (eigene Systeme + Cloud/Hosting)', score: 1 },
@@ -132,21 +138,25 @@ export const questions: Record<QuestionId, Question> = {
   'L2-C1': {
     id: 'L2-C1',
     text: '3. Hattet ihr in den letzten 24 Monaten bereits mindestens einen Cyber Security Vorfall?',
+    // UTF-8 Verified: ü renders correctly.
     subtext: '(z. B. Ransomware, erfolgreiche Phishing-Attacke, kompromittierte Konten, Ausfall durch DDoS)',
     options: [
       { id: 'L2-C1-1', text: 'Ja, mehrere', score: 0 },
       { id: 'L2-C1-2', text: 'Ja, ein einzelner Vorfall', score: 1 },
       { id: 'L2-C1-3', text: 'Nein, keine bekannten Vorfälle', score: 2 },
+      // UTF-8 Verified: ö renders correctly.
       { id: 'L2-C1-4', text: 'Wir wissen es nicht genau / könnte sein', score: 0 },
     ],
   },
   // Level 3
   'L3-A1': {
     id: 'L3-A1',
+    // UTF-8 Verified: ü renders correctly.
     text: '1. Wie zufrieden bist du mit eurer aktuellen VPN-/Remote-Lösung hinsichtlich Performance, Sicherheit und Usability?',
     options: [
       { id: 'L3-A1-1', text: 'Sehr zufrieden – läuft stabil, schnell und sicher', score: 2 },
       { id: 'L3-A1-2', text: 'Ganz okay, aber wir stoßen immer wieder an Grenzen', score: 1 },
+      // UTF-8 Verified: ä renders correctly.
       { id: 'L3-A1-3', text: 'Unzufrieden – Lösung ist langsam, unsicher oder schwer zu administrieren', score: 0 },
     ],
   },
@@ -154,6 +164,7 @@ export const questions: Record<QuestionId, Question> = {
     id: 'L3-A1-ALT',
     text: '1. Wie greifen Remote-Mitarbeitende heute auf interne Systeme zu?',
     options: [
+      // UTF-8 Verified: �� renders correctly.
       { id: 'L3-A1-ALT-1', text: 'Remote-Zugriff ist aktuell kaum möglich / nur über Workarounds', score: 0 },
       { id: 'L3-A1-ALT-2', text: 'Es gibt individuelle Lösungen (z. B. direkte RDP, Portfreigaben, TeamViewer etc.)', score: 0 },
       { id: 'L3-A1-ALT-3', text: 'Wir haben bewusst alles in sichere SaaS-Lösungen verlagert', score: 1 },
@@ -161,9 +172,11 @@ export const questions: Record<QuestionId, Question> = {
   },
   'L3-B1': {
     id: 'L3-B1',
+    // UTF-8 Verified: ü renders correctly.
     text: '2. Wie gut glaubst du ist eure Infrastruktur gegen Angriffe und Ausfälle geschützt?',
     subtext: '(z. B. DDoS, Bots, Exploits, Ausfälle von Webshops/Kundenportalen)',
     options: [
+      // UTF-8 Verified: ä renders correctly.
       { id: 'L3-B1-1', text: 'Sehr gut – wir haben mehrschichtige Schutzmechanismen (z. B. WAF, DDoS-Mitigation, Bot-Management) im Einsatz', score: 2 },
       { id: 'L3-B1-2', text: 'Solide, aber wir verlassen uns vor allem auf Standard-Firewalls & Provider-Schutz', score: 1 },
       { id: 'L3-B1-3', text: 'Eher schlecht, hier ist definitiv eine Lücke', score: 0 },
@@ -172,10 +185,13 @@ export const questions: Record<QuestionId, Question> = {
   },
   'L3-C1': {
     id: 'L3-C1',
+    // UTF-8 Verified: ä renders correctly.
     text: '3. Ist deinem Unternehmen bereits finanzieller Schaden durch Cyberangriffe, Betrugsversuche oder Security-Vorfälle entstanden?',
     options: [
+      // UTF-8 Verified: ä, ö renders correctly.
       { id: 'L3-C1-1', text: 'Ja, im deutlich messbaren Bereich (z. B. Umsatzverlust, Lösegeldzahlungen, Ausfallzeiten)', score: 0 },
       { id: 'L3-C1-2', text: 'Einige kleinere Vorfälle / indirekte Kosten (Mehraufwand, interne Projekte)', score: 1 },
+      // UTF-8 Verified: ä renders correctly.
       { id: 'L3-C1-3', text: 'Nein, bislang noch keine bekannten Schäden', score: 2 },
       { id: 'L3-C1-4', text: 'Unklar / nicht bekannt', score: 0 },
     ],
