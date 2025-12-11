@@ -147,7 +147,7 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
         ))}
       </motion.div>
       <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" onClick={onBack} aria-label="Zur��ck zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
+        <Button variant="outline" onClick={onBack} aria-label="Zurück zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
         <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient" aria-label="Weiter zum nächsten Schritt">Weiter</Button>
       </div>
     </motion.div>
@@ -178,7 +178,8 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
       <Card className="shadow-soft">
         <CardHeader><CardTitle>Wie wir dich unterstützen können</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-muted-foreground">
-          <p>Mit der Kombination aus Cloudflare, Ubiquiti, HXNWRK und von Busch bringen wir dein Unternehmen auf ein neues Sicherheits- und Performance-Level:</p>
+          {/* Client Feedback: Updated intro per Three60 approach request, preserving bullets for Cloudflare/Ubiquiti/HXNWRK/von Busch. */}
+          <p>Durch unseren ganzheitlichen Three60 Ansatz erreichen wir eine 360-Grad-Betrachtung deiner gesamten IT-Umgebung. Zusammen bringen wir dein Unternehmen auf ein neues Sicherheits- und Performance-Level.</p>
           <ul className="list-disc list-inside space-y-2">
             <li><strong className="text-foreground">Cloudflare Connectivity Cloud:</strong> Zero Trust, Schutz für Web-Anwendungen (WAF, DDoS), sichere Konnektivität.</li>
             <li><strong className="text-foreground">Ubiquiti-Hardware:</strong> Moderne Netzwerk-Infrastruktur als solide Basis.</li>
