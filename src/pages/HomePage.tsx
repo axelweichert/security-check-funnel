@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toaster } from '@/components/ui/sonner';
 import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
@@ -51,19 +50,12 @@ export function HomePage() {
     }
   };
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased relative">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-slate-950 dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)]">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-20 dark:opacity-30"></div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-8 md:py-10 lg:py-12">
+        <AnimatePresence mode="wait">
+          {renderContent()}
+        </AnimatePresence>
       </div>
-      <ThemeToggle className="fixed top-4 right-4" />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-8 md:py-10 lg:py-12">
-          <AnimatePresence mode="wait">
-            {renderContent()}
-          </AnimatePresence>
-        </div>
-      </main>
-      <Toaster richColors closeButton />
     </div>
   );
 }
@@ -75,9 +67,11 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
     exit={{ opacity: 0, scale: 0.9 }}
     transition={{ duration: 0.5, ease: "easeInOut" }}
     className="text-center flex flex-col items-center space-y-8"
+    role="main"
+    aria-labelledby="main-heading"
   >
     <div className="space-y-4 max-w-4xl">
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-display text-foreground">
+      <h1 id="main-heading" className="text-4xl md:text-5xl lg:text-6xl font-bold font-display text-foreground">
         Wie widerstandsfähig ist dein Unternehmen gegen Cyberangriffe?
       </h1>
       <p className="text-lg md:text-xl text-muted-foreground text-balance">
@@ -85,13 +79,14 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
       </p>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
+        {/* A/B Variant: "Sofort umsetzbare Einblicke erhalten." */}
         <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
         <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
         <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich unterstützen können." />
     </div>
     <div className="text-center space-y-4 pt-8">
         <p className="text-muted-foreground">Dauer: ca. 2–3 Minuten</p>
-        <Button size="lg" className="btn-gradient px-10 py-6 text-xl font-semibold shadow-lg hover:shadow-primary/80 transition-all duration-300 hover:-translate-y-1" onClick={onStart}>
+        <Button size="lg" className="btn-gradient px-10 py-6 text-xl font-semibold shadow-lg hover:shadow-primary/80 transition-all duration-300 hover:-translate-y-1" onClick={onStart} aria-label="Security-Check starten">
             Jetzt Security-Check starten
         </Button>
         <p className="text-sm text-muted-foreground pt-4">von Busch GmbH – IT-Solutions & Security <br/> In Kooperation mit Cloudflare und HXNWRK</p>
@@ -120,6 +115,10 @@ const listVariants = {
 const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
   const answers = useFunnelStore(s => s.answers);
   const setAnswer = useFunnelStore(s => s.setAnswer);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
   return (
     <motion.div
       key={`step-${stepIndex}`}
@@ -128,9 +127,15 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.4, ease: "easeInOut" }}
       className="max-w-3xl mx-auto space-y-8"
+      role="region"
+      aria-labelledby={`step-title-${stepIndex}`}
+      ref={containerRef}
+      tabIndex={-1}
+      style={{outline: 'none'}}
     >
+      <h2 id={`step-title-${stepIndex}`} className="sr-only">{`Schritt ${stepIndex + 1}: ${title}`}</h2>
       <ProgressStepper currentStep={stepIndex} totalSteps={3} stepTitle={title} />
-      <motion.div 
+      <motion.div
         className="space-y-6 md:space-y-8"
         variants={listVariants}
         initial="hidden"
@@ -141,8 +146,8 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
         ))}
       </motion.div>
       <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
-        <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient">Weiter</Button>
+        <Button variant="outline" onClick={onBack} aria-label="Zur��ck zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
+        <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient" aria-label="Weiter zum nächsten Schritt">Weiter</Button>
       </div>
     </motion.div>
   );
@@ -160,7 +165,7 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
       transition={{ duration: 0.5 }}
       className="max-w-4xl mx-auto space-y-10"
     >
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-3" aria-live="polite">
         <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">{overall.headline}</h2>
         <p className="text-lg text-muted-foreground max-w-3xl mx-auto">{overall.summary}</p>
       </div>
@@ -182,7 +187,7 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
         </CardContent>
       </Card>
       <div className="text-center pt-6">
-        <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext}>
+        <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext} aria-label="Individuelle Auswertung und Beratung anfordern">
           Individuelle Auswertung & Beratung anfordern
         </Button>
       </div>

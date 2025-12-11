@@ -44,6 +44,7 @@ export const useFunnelStore = create<FunnelState>()(
   )
 );
 // --- QUESTIONS DATA ---
+// This is a static object, effectively memoized at the module level. No need for useMemo in components.
 export const questions: Record<QuestionId, Question> = {
   // Level 1
   'L1-A': {
@@ -198,10 +199,8 @@ export function computeAreaScores(answers: AnswersState): AreaScores {
   return { areaA: scoreA, areaB: scoreB, areaC: scoreC };
 }
 export function computeAverageScore(areaScores: AreaScores): number {
-  // The max score per area is not fixed, so we calculate average based on 3 areas.
-  // Max scores: A=6, B=6, C=6. Total max = 18.
   const totalScore = areaScores.areaA + areaScores.areaB + areaScores.areaC;
-  // To get a rating comparable to the spec (0-6), we average the scores.
+  // Average score across the three areas to normalize it for overall rating.
   return totalScore / 3;
 }
 export type MaturityLevel = 'high' | 'medium' | 'low';
@@ -213,13 +212,13 @@ export type ResultLabel = {
 };
 export function deriveAreaLabel(score: number): ResultLabel {
   if (score >= 5) { // 5-6 points
-    return { level: 'high', text: 'Geringes Risiko / Hohe Reife', color: 'text-green-700', bgColor: 'bg-green-100' };
+    return { level: 'high', text: 'Geringes Risiko / Hohe Reife', color: 'text-green-700 dark:text-green-300', bgColor: 'bg-green-100 dark:bg-green-900/50' };
   }
   if (score >= 3) { // 3-4 points
-    return { level: 'medium', text: 'Mittleres Risiko / Mittlere Reife', color: 'text-yellow-700', bgColor: 'bg-yellow-100' };
+    return { level: 'medium', text: 'Mittleres Risiko / Mittlere Reife', color: 'text-yellow-700 dark:text-yellow-300', bgColor: 'bg-yellow-100 dark:bg-yellow-900/50' };
   }
   // 0-2 points
-  return { level: 'low', text: 'Hohes Risiko / Niedrige Reife', color: 'text-red-700', bgColor: 'bg-red-100' };
+  return { level: 'low', text: 'Hohes Risiko / Niedrige Reife', color: 'text-red-700 dark:text-red-300', bgColor: 'bg-red-100 dark:bg-red-900/50' };
 }
 export function deriveOverallLabel(averageScore: number): { headline: string; summary: string } {
   if (averageScore >= 4.5) {
@@ -244,6 +243,7 @@ export const areaDetails = {
   areaB: { title: 'Web & Online-Prozesse', description: 'Schutz deiner Webseiten und geschäftskritischen Anwendungen.' },
   areaC: { title: 'Mitarbeiter-Sicherheit (Awareness)', description: 'Die menschliche Firewall deines Unternehmens stärken.' },
 };
+// Concise texts for better screen reader experience.
 export const resultTexts: Record<MaturityLevel, string> = {
   low: 'In diesem Bereich besteht ein erhöhtes Risiko. Angriffe oder Ausfälle könnten schnell geschäftskritische Auswirkungen haben.',
   medium: 'Du hast eine Basis geschaffen, profitierst aber deutlich von modernen Zero-Trust- und Cloud-Security-Ansätzen.',
