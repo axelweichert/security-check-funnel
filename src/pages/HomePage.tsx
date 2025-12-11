@@ -119,11 +119,11 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
       className="flex flex-col items-center space-y-4 w-full pt-4"
     >
-      <p className="text-xl md:text-2xl text-muted-foreground font-medium text-center max-w-2xl mx-auto leading-relaxed">
-        Deutschland ist das drittmeist angegriffene Land der Welt.
+      <p className="text-2xl md:text-3xl text-primary font-semibold text-center max-w-2xl mx-auto leading-relaxed">
+        <strong>Deutschland ist das drittmeist angegriffene Land der Welt im Cyberspace.</strong>
       </p>
       <Button variant="outline" size="lg" asChild>
         <a href="https://radar.cloudflare.com/de-de/reports/ddos-2025-q3" target="_blank" rel="noopener noreferrer" aria-label="Cloudflare DDoS Threat Report Q3-2025 entdecken (öffnet in neuem Tab)">
