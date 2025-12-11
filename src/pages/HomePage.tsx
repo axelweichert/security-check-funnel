@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
 import { LeadForm } from '@/components/funnel/LeadForm';
-import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, areaDetails, resultTexts } from '@/lib/funnel';
+import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, areaDetails, resultTexts, type Question } from '@/lib/funnel';
 import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -23,21 +23,21 @@ export function HomePage() {
   }, [answers]);
   const l1aAnswer = answers['L1-A'];
   const l1bAnswer = answers['L1-B'];
-  const level2Questions = [
+  const level2Questions = useMemo(() => [
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A1'],
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A2'],
     (l1bAnswer === 'L1-B-1' || l1bAnswer === 'L1-B-2') && questions['L2-B1'],
     (l1bAnswer === 'L1-B-1' || l1bAnswer === 'L1-B-2') && questions['L2-B2'],
     questions['L2-C1'],
-  ].filter(Boolean);
-  const level3Questions = [
+  ].filter((q): q is Question => !!q), [l1aAnswer, l1bAnswer]);
+  const level3Questions = useMemo(() => [
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') ? questions['L3-A1'] : questions['L3-A1-ALT'],
     questions['L3-B1'],
     questions['L3-C1'],
-  ].filter(Boolean);
+  ].filter((q): q is Question => !!q), [l1aAnswer]);
   const isLevel1Complete = answers['L1-A'] && answers['L1-B'] && answers['L1-C'];
-  const isLevel2Complete = level2Questions.every(q => q && answers[q.id]);
-  const isLevel3Complete = level3Questions.every(q => q && answers[q.id]);
+  const isLevel2Complete = level2Questions.every(q => answers[q.id]);
+  const isLevel3Complete = level3Questions.every(q => answers[q.id]);
   const renderContent = () => {
     switch (step) {
       case 'start': return <StartScreen onStart={() => setStep('level1')} />;
@@ -84,7 +84,7 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
         Kurzer 3-Stufen-Check zu VPN, Web-Anwendungen und Mitarbeiter-Sicherheit – mit konkreten Handlungsempfehlungen.
       </p>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full pt-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
         <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
         <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
         <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich unterstützen können." />
@@ -105,10 +105,21 @@ const InfoCard = ({ icon, title, text }: { icon: React.ReactNode, title: string,
         <p className="text-muted-foreground text-sm">{text}</p>
     </div>
 );
-const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: (Question | false)[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
+const listVariants = {
+  visible: {
+    opacity: 1,
+    transition: {
+      when: "beforeChildren",
+      staggerChildren: 0.1,
+    },
+  },
+  hidden: {
+    opacity: 0,
+  },
+};
+const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
   const answers = useFunnelStore(s => s.answers);
   const setAnswer = useFunnelStore(s => s.setAnswer);
-  const visibleQuestions = questions.filter((q): q is Question => !!q);
   return (
     <motion.div
       key={`step-${stepIndex}`}
@@ -119,11 +130,16 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
       className="max-w-3xl mx-auto space-y-8"
     >
       <ProgressStepper currentStep={stepIndex} totalSteps={3} stepTitle={title} />
-      <div className="space-y-6">
-        {visibleQuestions.map(q => (
+      <motion.div 
+        className="space-y-6 md:space-y-8"
+        variants={listVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {questions.map(q => (
           <StepCard key={q.id} question={q} value={answers[q.id]} onValueChange={(val) => setAnswer(q.id, val)} />
         ))}
-      </div>
+      </motion.div>
       <div className="flex justify-between items-center pt-4">
         <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
         <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient">Weiter</Button>
@@ -148,7 +164,7 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
         <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">{overall.headline}</h2>
         <p className="text-lg text-muted-foreground max-w-3xl mx-auto">{overall.summary}</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <ResultCard icon={<Wifi />} title={areaDetails.areaA.title} label={areaALabel} text={resultTexts[areaALabel.level]} />
         <ResultCard icon={<Shield />} title={areaDetails.areaB.title} label={areaBLabel} text={resultTexts[areaBLabel.level]} />
         <ResultCard icon={<Users />} title={areaDetails.areaC.title} label={areaCLabel} text={resultTexts[areaCLabel.level]} />

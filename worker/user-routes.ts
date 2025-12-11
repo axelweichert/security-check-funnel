@@ -66,7 +66,16 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       scoreSummary: body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 },
     };
     const createdLead = await LeadEntity.create(c.env, newLead);
+    // Mock webhook/email simulation for Phase 2
+    console.log(`[MOCK WEBHOOK] New lead received: ${createdLead.id} for ${createdLead.company}. Sending notification.`);
     return ok(c, createdLead);
+  });
+  app.get('/api/leads', async (c) => {
+    await LeadEntity.ensureSeed(c.env); // Ensures index exists, no-op if data present
+    const cursor = c.req.query('cursor');
+    const limit = c.req.query('limit') ? Math.max(1, Number(c.req.query('limit'))) : 25;
+    const page = await LeadEntity.list(c.env, cursor ?? null, limit);
+    return ok(c, page);
   });
   // DELETE: Users
   app.delete('/api/users/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await UserEntity.delete(c.env, c.req.param('id')) }));

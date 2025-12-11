@@ -28,6 +28,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Lead } from "@shared/types";
+import { Skeleton } from "@/components/ui/skeleton";
 const formSchema = z.object({
   company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
   contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
@@ -61,6 +62,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
     },
   });
   async function onSubmit(values: LeadFormValues) {
+    // Handler-bound state update, no render-loop issue.
     setIsSubmitting(true);
     const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
       ...values,
@@ -77,11 +79,13 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
         body: JSON.stringify(leadPayload),
       });
       toast.success("Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.");
+      form.reset();
       onSuccess();
     } catch (error) {
       toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       console.error("Failed to submit lead:", error);
     } finally {
+      // Handler-bound state update.
       setIsSubmitting(false);
     }
   }
@@ -100,18 +104,18 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField control={form.control} name="company" render={({ field }) => (
               <FormItem>
                 <FormLabel>Firmenname</FormLabel>
-                <FormControl><Input placeholder="Ihre Firma GmbH" {...field} /></FormControl>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="Ihre Firma GmbH" {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="contact" render={({ field }) => (
               <FormItem>
                 <FormLabel>Ansprechpartner (Vor- und Nachname)</FormLabel>
-                <FormControl><Input placeholder="Max Mustermann" {...field} /></FormControl>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="Max Mustermann" {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
@@ -119,6 +123,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
           <FormField control={form.control} name="employeesRange" render={({ field }) => (
             <FormItem>
               <FormLabel>Anzahl Mitarbeitende</FormLabel>
+              {isSubmitting ? <Skeleton className="h-10 w-full" /> :
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger><SelectValue placeholder="Bitte auswählen" /></SelectTrigger>
@@ -131,22 +136,22 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
                   <SelectItem value="501-2000">501–2.000</SelectItem>
                   <SelectItem value="2000+">Über 2.000</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select>}
               <FormMessage />
             </FormItem>
           )} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField control={form.control} name="email" render={({ field }) => (
               <FormItem>
                 <FormLabel>E-Mail-Adresse</FormLabel>
-                <FormControl><Input type="email" placeholder="max.mustermann@firma.de" {...field} /></FormControl>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input type="email" placeholder="max.mustermann@firma.de" {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="phone" render={({ field }) => (
               <FormItem>
                 <FormLabel>Telefonnummer</FormLabel>
-                <FormControl><Input placeholder="+49 123 456789" {...field} /></FormControl>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="+49 123 456789" {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
@@ -154,20 +159,20 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
           <FormField control={form.control} name="role" render={({ field }) => (
             <FormItem>
               <FormLabel>Ihre Rolle/Funktion <span className="text-muted-foreground">(Optional)</span></FormLabel>
-              <FormControl><Input placeholder="z.B. IT-Leitung, Geschäftsführung" {...field} /></FormControl>
+              <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="z.B. IT-Leitung, Geschäftsführung" {...field} />}</FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="notes" render={({ field }) => (
             <FormItem>
               <FormLabel>Was ist aktuell deine größte Herausforderung in IT & Security? <span className="text-muted-foreground">(Optional)</span></FormLabel>
-              <FormControl><Textarea placeholder="Beschreiben Sie kurz Ihre Situation..." {...field} /></FormControl>
+              <FormControl>{isSubmitting ? <Skeleton className="h-24 w-full" /> : <Textarea placeholder="Beschreiben Sie kurz Ihre Situation..." {...field} />}</FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="consent" render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
               <div className="space-y-1 leading-none">
                 <Label htmlFor="consent" className="cursor-pointer">Einverständnis</Label>
                 <p className="text-sm text-muted-foreground">
@@ -177,7 +182,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
               </div>
             </FormItem>
           )} />
-          <Button type="submit" size="lg" className="w-full btn-gradient text-lg" disabled={isSubmitting}>
+          <Button type="submit" size="lg" className="w-full btn-gradient text-lg transition-transform duration-200 hover:scale-105 active:scale-95" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
             Ergebnis absenden & Beratung anfordern
           </Button>
