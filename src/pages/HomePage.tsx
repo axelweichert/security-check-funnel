@@ -90,7 +90,7 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
         <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
         <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
         {/* UTF-8 Verification: ö in 'können' must render correctly in Chrome/Firefox/Safari */}
-        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich konkret unterstützen können." />
+        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre wie wir dich mit unserem ganzheitlichen Three60 Ansatz konkret unterstützen können." />
     </div>
     <div className="text-center space-y-4 pt-8">
         <p className="text-muted-foreground">Dauer: ca. 2–3 Minuten</p>
