@@ -1,0 +1,31 @@
+{
+  "name": "von Busch Security-Check",
+  "short_name": "Security-Check",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#3765EB",
+  "description": "Stilvoller 3‑Schritt Security-Check mit Scoring, Ergebnis-Auswertung und Lead-Formular zur Beratungseinleitung.",
+  "icons": [
+    {
+      "src": "https://www.vonbusch.digital/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "https://www.vonbusch.digital/img/logo_dark.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://www.vonbusch.digital/img/logo_dark.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "scope": "/",
+  "dir": "ltr",
+  "lang": "de-DE"
+}
