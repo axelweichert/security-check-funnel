@@ -7,7 +7,7 @@ interface LayoutProps {
   title?: string;
   description?: string;
 }
-const defaultTitle = 'Security-Check Funnel | von Busch GmbH';
+const defaultTitle = 'Security-Check in 3 Minuten by vonBusch';
 const defaultDescription = 'Stilvoller 3‑Schritt Security-Check (DE) mit Scoring, Ergebnis-Auswertung und Lead-Formular zur Beratungseinleitung.';
 const ogImageUrl = 'https://www.vonbusch.digital/images/og-image.png'; // Placeholder OG image URL
 export function Layout({ children, title = defaultTitle, description = defaultDescription }: LayoutProps) {
@@ -46,6 +46,15 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       }
       meta.setAttribute('content', content);
     });
+    // Client feedback: Favicon from https://vonbusch.digital/favicon.ico for tab/bookmark display
+    let favicon = document.querySelector('link[rel="icon"]');
+    if (!favicon) {
+      favicon = document.createElement('link');
+      favicon.setAttribute('rel', 'icon');
+      document.head.appendChild(favicon);
+    }
+    favicon.setAttribute('href', 'https://vonbusch.digital/favicon.ico');
+    favicon.setAttribute('type', 'image/x-icon');
   }, [title, description]);
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased relative">
