@@ -21,7 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { AreaScores } from "@/lib/funnel";
+import { AreaScores, deriveAreaLabel, deriveOverallLabel } from "@/lib/funnel";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
@@ -62,7 +62,6 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
     },
   });
   const onSubmit = useCallback(async (values: LeadFormValues) => {
-    // Handler-bound state update, no render-loop issue.
     setIsSubmitting(true);
     const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
       ...values,
@@ -79,13 +78,31 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
         body: JSON.stringify(leadPayload),
       });
       toast.success("Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.");
+      // Client feedback: Open mail client with pre-filled body
+      const formattedBody = [
+        "Firmendaten:",
+        `- Firma: ${values.company}`,
+        `- Ansprechpartner: ${values.contact}`,
+        `- Mitarbeiter: ${values.employeesRange}`,
+        `- E-Mail: ${values.email}`,
+        `- Telefon: ${values.phone}`,
+        values.role ? `- Rolle: ${values.role}` : null,
+        values.notes ? `- Notizen: ${values.notes}` : null,
+        "",
+        "Score-Zusammenfassung:",
+        `- VPN/Remote: ${scores.areaA}/6 (${deriveAreaLabel(scores.areaA).text})`,
+        `- Web/Online: ${scores.areaB}/6 (${deriveAreaLabel(scores.areaB).text})`,
+        `- Mitarbeiter-Sicherheit: ${scores.areaC}/6 (${deriveAreaLabel(scores.areaC).text})`,
+        `- Gesamt: ${scores.average.toFixed(1)}/6 (${deriveOverallLabel(scores.average).headline})`,
+      ].filter(line => line !== null).join("\n");
+      const mailtoUrl = `mailto:security@vonbusch.digital?subject=${encodeURIComponent(`Security-Check Anfrage von ${values.company}`)}&body=${encodeURIComponent(formattedBody)}`;
+      window.location.href = mailtoUrl;
       form.reset();
       onSuccess();
     } catch (error) {
       toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       console.error("Failed to submit lead:", error);
     } finally {
-      // Handler-bound state update.
       setIsSubmitting(false);
     }
   }, [scores, form, onSuccess]);

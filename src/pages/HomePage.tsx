@@ -4,12 +4,20 @@ import { Button } from '@/components/ui/button';
 import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
 import { LeadForm } from '@/components/funnel/LeadForm';
-import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, areaDetails, resultTexts, type Question } from '@/lib/funnel';
+import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, areaDetails as originalAreaDetails, resultTexts, type Question } from '@/lib/funnel';
 import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Footer } from '@/components/Footer';
 type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
+// Client feedback: Update areaC title to prevent truncation.
+const areaDetails = {
+  ...originalAreaDetails,
+  areaC: {
+    ...originalAreaDetails.areaC,
+    title: "Mitarbeiter-Sicherheit",
+  }
+};
 export function HomePage() {
   const [step, setStep] = useState<FunnelStep>('start');
   const answers = useFunnelStore(s => s.answers);
@@ -234,6 +242,13 @@ const ThanksScreen = ({ onReset }: { onReset: () => void }) => (
         <a href="https://www.vonbusch.digital" target="_blank" rel="noopener noreferrer">Website von Busch besuchen</a>
       </Button>
       <Button size="lg" className="btn-gradient hover:shadow-primary" onClick={onReset}>Neuen Check starten</Button>
+    </div>
+    <div className="pt-4">
+      <Button asChild size="lg" variant="outline" className="transition-transform duration-200 hover:scale-105">
+        <a href="https://outlook.office.com/book/vonBuschGmbHCloudflare@vonbusch.digital/?ismsaljsauthenabled=true" target="_blank" rel="noopener noreferrer" aria-label="Termin buchen">
+          Direkt einen Termin buchen
+        </a>
+      </Button>
     </div>
     <Footer />
   </motion.div>
