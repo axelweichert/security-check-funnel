@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { AreaScores } from "@/lib/funnel";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Lead } from "@shared/types";
@@ -61,7 +61,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       consent: false,
     },
   });
-  async function onSubmit(values: LeadFormValues) {
+  const onSubmit = useCallback(async (values: LeadFormValues) => {
     // Handler-bound state update, no render-loop issue.
     setIsSubmitting(true);
     const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
@@ -88,7 +88,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       // Handler-bound state update.
       setIsSubmitting(false);
     }
-  }
+  }, [scores, form, onSuccess]);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -99,7 +99,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold font-display text-foreground">Dein Ergebnis als Grundlage für konkrete Maßnahmen</h2>
         <p className="text-muted-foreground mt-2 text-lg">
-          Trage deine Kontaktdaten ein – wir melden uns mit einer individuellen Einschätzung und konkreten Vorschlägen für dein Unternehmen.
+          Trage deine Kontaktdaten ein �� wir melden uns mit einer individuellen Einschätzung und konkreten Vorschlägen für dein Unternehmen.
         </p>
       </div>
       <Form {...form}>

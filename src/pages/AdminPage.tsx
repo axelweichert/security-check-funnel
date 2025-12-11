@@ -36,24 +36,26 @@ export function AdminPage() {
       }
     }
   }, [navigate]);
-  const { data, isLoading, error } = useQuery<{ items: Lead[] }>({
+  const { data, isLoading, error, isError } = useQuery<{ items: Lead[]; next?: string | null }>({
     queryKey: ['leads'],
-    queryFn: () => api('/api/leads?limit=100'), // Fetch up to 100 leads for now
-    onError: (err) => {
-      toast.error(`Fehler beim Laden der Leads: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`);
-    }
+    queryFn: () => api<{ items: Lead[]; next?: string | null }>('/api/leads?limit=100'),
   });
+  useEffect(() => {
+    if (isError && error) {
+      toast.error(`Fehler beim Laden der Leads: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+    }
+  }, [isError, error]);
   const filteredLeads = useMemo(() => {
-    if (!data?.items) return [];
-    return data.items.filter(lead =>
+    return (data?.items ?? []).filter(lead =>
       lead.company.toLowerCase().includes(filter.toLowerCase()) ||
       lead.contact.toLowerCase().includes(filter.toLowerCase())
     );
   }, [data, filter]);
   const chartData = useMemo(() => {
-    if (!data?.items) return [];
+    const leads = data?.items ?? [];
+    if (leads.length === 0) return [];
     const counts = { low: 0, medium: 0, high: 0 };
-    data.items.forEach(lead => {
+    leads.forEach(lead => {
       const level = getMaturityLevel(lead.scoreSummary.average);
       counts[level]++;
     });

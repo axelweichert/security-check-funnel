@@ -126,7 +126,7 @@ export const questions: Record<QuestionId, Question> = {
       { id: 'L2-C1-1', text: 'Ja, mehrere', score: 0 },
       { id: 'L2-C1-2', text: 'Ja, ein einzelner Vorfall', score: 1 },
       { id: 'L2-C1-3', text: 'Nein, keine bekannten Vorfälle', score: 2 },
-      { id: 'L2-C1-4', text: 'Wir wissen es nicht genau / könnte sein', score: 0 },
+      { id: 'L2-C1-4', text: 'Wir wissen es nicht genau / k��nnte sein', score: 0 },
     ],
   },
   // Level 3
@@ -196,7 +196,11 @@ export function computeAreaScores(answers: AnswersState): AreaScores {
   const scoreC = getScoreForAnswer('L1-C', answers['L1-C']) +
                  getScoreForAnswer('L2-C1', answers['L2-C1']) +
                  getScoreForAnswer('L3-C1', answers['L3-C1']);
-  return { areaA: scoreA, areaB: scoreB, areaC: scoreC };
+  return {
+    areaA: Math.min(6, scoreA),
+    areaB: Math.min(6, scoreB),
+    areaC: Math.min(6, scoreC),
+  };
 }
 export function computeAverageScore(areaScores: AreaScores): number {
   const totalScore = areaScores.areaA + areaScores.areaB + areaScores.areaC;
