@@ -2,7 +2,7 @@ import '@/lib/errorReporter';
 import { enableMapSet } from "immer";
 enableMapSet();
 import { StrictMode, Suspense, lazy } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, type Root } from 'react-dom/client'
 import {
   createBrowserRouter,
   RouterProvider,
@@ -29,18 +29,33 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
   },
 ]);
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <Layout>
-          <ErrorBoundary>
-            <Suspense fallback={<Skeleton className="h-screen w-screen rounded-none" />}>
-              <RouterProvider router={router} />
-            </Suspense>
-          </ErrorBoundary>
-        </Layout>
-      </ThemeProvider>
-    </QueryClientProvider>
-  </StrictMode>,
-)
+const container = document.getElementById('root')!;
+let root: Root | null = null;
+function renderApp() {
+  const app = (
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Layout>
+            <ErrorBoundary>
+              <Suspense fallback={<Skeleton className="h-screen w-screen rounded-none" />}>
+                <RouterProvider router={router} />
+              </Suspense>
+            </ErrorBoundary>
+          </Layout>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </StrictMode>
+  );
+  if (import.meta.hot) {
+    // In development with HMR, reuse the root instance
+    root = (import.meta.hot.data.root ||= createRoot(container));
+  } else {
+    // In production, create a new root
+    if (!root) {
+      root = createRoot(container);
+    }
+  }
+  root.render(app);
+}
+renderApp();
