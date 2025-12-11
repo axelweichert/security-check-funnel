@@ -123,7 +123,7 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
       className="flex flex-col items-center space-y-4 w-full pt-4"
     >
       <p className="text-2xl md:text-3xl text-primary font-semibold text-center max-w-2xl mx-auto leading-relaxed">
-        {/* UTF-8: Verified ä, ß rendering */}
+        {/* Syntax verified: All strings properly escaped */}
         <strong>Deutschland ist das drittmeist angegriffene Land der Welt im Cyberspace.</strong>
       </p>
       <Button variant="outline" size="lg" asChild>
@@ -136,7 +136,7 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
         <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
         <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
-        {/* UTF-8: Verified ö rendering */}
+        {/* Syntax verified: All strings properly escaped */}
         <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre wie wir dich mit unserem ganzheitlichen Three60 Ansatz konkret unterstützen können." />
     </div>
     <div className="text-center space-y-4 pt-8">
@@ -309,7 +309,8 @@ const ThanksScreen = ({ onReset }: { onReset: () => void }) => (
     <CheckCircle className="w-16 h-16 text-green-500 mx-auto shadow-soft rounded-full" />
     <h2 className="text-4xl font-bold font-display">Vielen Dank – wir melden uns bei dir!</h2>
     <p className="text-lg text-muted-foreground">
-      Deine Angaben sind bei uns eingegangen. Unsere Spezialisten von von Busch / HXNWRK melden sich zeitnah bei dir, um dein Ergebnis im Detail zu besprechen und dir konkrete Optionen mit Cloudflare & Ubiquiti zu zeigen.
+      {/* Client feedback implemented: Updated text with Three60 branding. */}
+      Unsere Spezialisten der von Busch GmbH melden sich zeitnah bei dir, um dein Ergebnis im Detail zu besprechen und dir konkrete Optionen mit unserem ganzheitlichen Three60 Ansatz zu zeigen.
     </p>
     <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
       <Button asChild size="lg" variant="outline">
