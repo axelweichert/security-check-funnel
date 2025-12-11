@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Toaster } from '@/components/ui/sonner';
 import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
 import { LeadForm } from '@/components/funnel/LeadForm';
@@ -9,6 +8,7 @@ import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deri
 import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Footer } from '@/components/Footer';
 type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
 export function HomePage() {
   const [step, setStep] = useState<FunnelStep>('start');
@@ -71,7 +71,7 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
     aria-labelledby="main-heading"
   >
     <div className="space-y-4 max-w-4xl">
-      <h1 id="main-heading" className="text-4xl md:text-5xl lg:text-6xl font-bold font-display text-foreground">
+      <h1 id="main-heading" className="text-5xl md:text-6xl font-bold font-display text-foreground leading-tight">
         Wie widerstandsfähig ist dein Unternehmen gegen Cyberangriffe?
       </h1>
       <p className="text-lg md:text-xl text-muted-foreground text-balance">
@@ -79,10 +79,9 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
       </p>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
-        {/* A/B Variant: "Sofort umsetzbare Einblicke erhalten." */}
         <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
         <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
-        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich unterstützen können." />
+        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre, wie Cloudflare, Ubiquiti und HXNWRK dich unterstützen k��nnen." />
     </div>
     <div className="text-center space-y-4 pt-8">
         <p className="text-muted-foreground">Dauer: ca. 2–3 Minuten</p>
@@ -91,11 +90,12 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
         </Button>
         <p className="text-sm text-muted-foreground pt-4">von Busch GmbH – IT-Solutions & Security <br/> In Kooperation mit Cloudflare und HXNWRK</p>
     </div>
+    <Footer />
   </motion.div>
 );
 const InfoCard = ({ icon, title, text }: { icon: React.ReactNode, title: string, text: string }) => (
-    <div className="bg-card/80 backdrop-blur-sm p-6 rounded-xl border shadow-soft text-center flex flex-col items-center">
-        <div className="mb-4">{icon}</div>
+    <div className="glass p-6 rounded-xl text-center flex flex-col items-center">
+        <motion.div whileHover={{ scale: 1.1 }} className="mb-4">{icon}</motion.div>
         <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
         <p className="text-muted-foreground text-sm">{text}</p>
     </div>
@@ -146,7 +146,7 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
         ))}
       </motion.div>
       <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" onClick={onBack} aria-label="Zur��ck zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
+        <Button variant="outline" onClick={onBack} aria-label="Zurück zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
         <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient" aria-label="Weiter zum nächsten Schritt">Weiter</Button>
       </div>
     </motion.div>
@@ -167,7 +167,7 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
     >
       <div className="text-center space-y-3" aria-live="polite">
         <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">{overall.headline}</h2>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">{overall.summary}</p>
+        <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">{overall.summary}</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <ResultCard icon={<Wifi />} title={areaDetails.areaA.title} label={areaALabel} text={resultTexts[areaALabel.level]} />
@@ -191,21 +191,24 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
           Individuelle Auswertung & Beratung anfordern
         </Button>
       </div>
+      <Footer />
     </motion.div>
   );
 };
 const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title: string, label: any, text: string }) => (
-  <Card className="flex flex-col shadow-soft">
+  <Card className="flex flex-col glass">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-base font-medium">{title}</CardTitle>
-      {icon}
+      <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
+        {icon}
+      </motion.div>
     </CardHeader>
     <CardContent className="flex-grow flex flex-col justify-between">
       <div>
         <div className={cn("text-sm font-bold px-2 py-1 rounded-full inline-block", label.bgColor, label.color)}>
           {label.text}
         </div>
-        <p className="text-sm text-muted-foreground mt-3">{text}</p>
+        <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{text}</p>
       </div>
     </CardContent>
   </Card>
@@ -218,7 +221,7 @@ const ThanksScreen = ({ onReset }: { onReset: () => void }) => (
     transition={{ duration: 0.5 }}
     className="text-center max-w-2xl mx-auto space-y-6 py-16"
   >
-    <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+    <CheckCircle className="w-16 h-16 text-green-500 mx-auto shadow-soft rounded-full" />
     <h2 className="text-4xl font-bold font-display">Vielen Dank – wir melden uns bei dir!</h2>
     <p className="text-lg text-muted-foreground">
       Deine Angaben sind bei uns eingegangen. Unsere Spezialisten von von Busch / HXNWRK melden sich zeitnah bei dir, um dein Ergebnis im Detail zu besprechen und dir konkrete Optionen mit Cloudflare & Ubiquiti zu zeigen.
@@ -227,7 +230,8 @@ const ThanksScreen = ({ onReset }: { onReset: () => void }) => (
       <Button asChild size="lg" variant="outline">
         <a href="https://www.vonbusch.digital" target="_blank" rel="noopener noreferrer">Website von Busch besuchen</a>
       </Button>
-      <Button size="lg" className="btn-gradient" onClick={onReset}>Neuen Check starten</Button>
+      <Button size="lg" className="btn-gradient hover:shadow-primary" onClick={onReset}>Neuen Check starten</Button>
     </div>
+    <Footer />
   </motion.div>
 );

@@ -13,11 +13,11 @@ export default {
   				'Roboto',
   				'sans-serif'
   			],
-			display: [
-				'Inter',
-				'system-ui',
-				'sans-serif'
-			],
+  			display: [
+  				'Inter',
+  				'system-ui',
+  				'sans-serif'
+  			],
   			mono: [
   				'JetBrains Mono',
   				'Fira Code',
@@ -47,13 +47,15 @@ export default {
   			'5xl': [
   				'3rem',
   				{
-  					lineHeight: '1.1'
+  					lineHeight: '1.1',
+            fontWeight: 'bold'
   				}
   			],
   			'6xl': [
   				'3.75rem',
   				{
-  					lineHeight: '1.1'
+  					lineHeight: '1.1',
+            fontWeight: 'bold'
   				}
   			],
   			'7xl': [
@@ -118,6 +120,7 @@ export default {
   				DEFAULT: 'hsl(var(--accent))',
   				foreground: 'hsl(var(--accent-foreground))'
   			},
+        'accent-blue': 'hsl(var(--accent-blue))',
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
@@ -232,7 +235,7 @@ export default {
   		},
   		backgroundImage: {
   			'gradient-rainbow': 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-  			'gradient-primary': 'linear-gradient(135deg, #667eea, #764ba2)',
+  			'gradient-primary': 'linear-gradient(135deg, #E55A1B 0%, #D14615 50%, #4F46E5 100%)',
   			'gradient-mesh': 'radial-gradient(at 40% 20%, hsla(28,100%,74%,1) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(189,100%,56%,1) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(355,100%,93%,1) 0px, transparent 50%), radial-gradient(at 80% 50%, hsla(340,100%,76%,1) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(22,100%,77%,1) 0px, transparent 50%), radial-gradient(at 80% 100%, hsla(242,100%,70%,1) 0px, transparent 50%), radial-gradient(at 0% 0%, hsla(343,100%,76%,1) 0px, transparent 50%)'
   		}
   	}

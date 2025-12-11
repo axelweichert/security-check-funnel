@@ -14,7 +14,9 @@ import { Shield, AlertTriangle, CheckCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#22c55e' };
+import { motion } from 'framer-motion';
+import { Footer } from '@/components/Footer';
+const COLORS = { low: '#dc2626', medium: '#d97706', high: '#16a34a' };
 const getMaturityLevel = (avgScore: number) => {
   if (avgScore >= 4.5) return 'high';
   if (avgScore >= 2.5) return 'medium';
@@ -75,8 +77,8 @@ export function AdminPage() {
           </div>
           <Button variant="outline" onClick={() => navigate('/')}>Zur Startseite</Button>
         </header>
-        <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
-          <Card className="lg:col-span-2 shadow-soft">
+        <div className="grid gap-8 grid-cols-1 lg:grid-cols-3 lg:auto-rows-fr">
+          <Card className="lg:col-span-2 glass">
             <CardHeader>
               <CardTitle>Eingegangene Leads</CardTitle>
               <div className="relative mt-2">
@@ -100,10 +102,10 @@ export function AdminPage() {
                   <Table role="grid" aria-label="Tabelle der Leads">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Firma</TableHead>
-                        <TableHead>Ansprechpartner</TableHead>
-                        <TableHead>Datum</TableHead>
-                        <TableHead className="text-right">Score</TableHead>
+                        <TableHead className="font-semibold text-lg">Firma</TableHead>
+                        <TableHead className="font-semibold text-lg">Ansprechpartner</TableHead>
+                        <TableHead className="font-semibold text-lg">Datum</TableHead>
+                        <TableHead className="text-right font-semibold text-lg">Score</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -135,14 +137,14 @@ export function AdminPage() {
             </CardContent>
           </Card>
           <div className="space-y-8">
-            <Card className="shadow-soft">
+            <Card className="glass">
               <CardHeader>
                 <CardTitle>Score Verteilung</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading && <Skeleton className="h-64 w-full" />}
                 {chartData.length > 0 ? (
-                  <div aria-hidden="true">
+                  <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.5 }} aria-hidden="true">
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
@@ -154,13 +156,13 @@ export function AdminPage() {
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
-                  </div>
+                  </motion.div>
                 ) : !isLoading && (
                   <div className="h-64 flex items-center justify-center text-muted-foreground">Keine Daten für das Diagramm.</div>
                 )}
               </CardContent>
             </Card>
-            <Card className="shadow-soft">
+            <Card className="glass">
               <CardHeader>
                 <CardTitle>Legende</CardTitle>
               </CardHeader>
@@ -172,9 +174,7 @@ export function AdminPage() {
             </Card>
           </div>
         </div>
-        <footer className="text-center mt-12 text-muted-foreground text-sm">
-          Built with ❤️ at Cloudflare
-        </footer>
+        <Footer />
       </div>
     </div>
   );
