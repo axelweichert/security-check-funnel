@@ -27,6 +27,11 @@ const initialAnswers: AnswersState = {
   'L2-A1': '', 'L2-A2': '', 'L2-B1': '', 'L2-B2': '', 'L2-C1': '',
   'L3-A1': '', 'L3-A1-ALT': '', 'L3-B1': '', 'L3-C1': '',
 };
+/**
+ * Zustand store for managing the funnel's state.
+ * It uses `persist` middleware to save the user's answers to localStorage,
+ * allowing them to resume the funnel if they leave and come back.
+ */
 export const useFunnelStore = create<FunnelState>()(
   persist(
     (set) => ({
@@ -44,8 +49,13 @@ export const useFunnelStore = create<FunnelState>()(
   )
 );
 // --- QUESTIONS DATA ---
-// This is a static object, effectively memoized at the module level. No need for useMemo in components.
-/* UTF-8: Ensure ß/��/ü render correctly in all environments */
+/**
+ * A static, comprehensive record of all questions in the funnel.
+ * This object serves as the single source of truth for question text, options, and scoring.
+ * The German text includes special characters (Umlauts, ß), which are encoded in UTF-8
+ * to ensure correct rendering across all platforms.
+ * This structure is designed to be easily adaptable for future localization if needed.
+ */
 export const questions: Record<QuestionId, Question> = {
   // Level 1
   'L1-A': {
@@ -73,7 +83,7 @@ export const questions: Record<QuestionId, Question> = {
     id: 'L1-C',
     text: '3. Wie gut sind deine Mitarbeitende aktuell in Bezug auf Phishing, Social Engineering und IT-Sicherheit geschult?',
     options: [
-      { id: 'L1-C-1', text: 'Wir führen regelmäßig verpflichtende Awareness-Trainings & Phishing-Simulationen durch', score: 2 },
+      { id: 'L1-C-1', text: 'Wir führen regelmä��ig verpflichtende Awareness-Trainings & Phishing-Simulationen durch', score: 2 },
       { id: 'L1-C-2', text: 'Es gibt gelegentliche Schulungen, aber nicht strukturiert', score: 1 },
       { id: 'L1-C-3', text: 'Schulungen finden so gut wie nicht statt', score: 0 },
       { id: 'L1-C-4', text: 'Ich weiß es nicht', score: 0 },
@@ -172,6 +182,12 @@ export const questions: Record<QuestionId, Question> = {
   },
 };
 // --- SCORING LOGIC ---
+/**
+ * Helper function to retrieve the score for a given answer.
+ * @param questionId The ID of the question.
+ * @param answerId The ID of the selected answer.
+ * @returns The score (0-2) for the answer, or 0 if not found.
+ */
 function getScoreForAnswer(questionId: QuestionId, answerId: AnswerId | null): number {
   if (!answerId) return 0;
   const question = questions[questionId];
@@ -183,6 +199,13 @@ export interface AreaScores {
   areaB: number;
   areaC: number;
 }
+/**
+ * Calculates the total score for each of the three main security areas.
+ * It sums the scores from all relevant questions for each area.
+ * The score for each area is capped at a maximum of 6 points as per the blueprint.
+ * @param answers The current state of all answers from the Zustand store.
+ * @returns An object containing the calculated scores for Area A, B, and C.
+ */
 export function computeAreaScores(answers: AnswersState): AreaScores {
   const scoreA = getScoreForAnswer('L1-A', answers['L1-A']) +
                  getScoreForAnswer('L2-A1', answers['L2-A1']) +
@@ -198,14 +221,19 @@ export function computeAreaScores(answers: AnswersState): AreaScores {
                  getScoreForAnswer('L2-C1', answers['L2-C1']) +
                  getScoreForAnswer('L3-C1', answers['L3-C1']);
   return {
-    areaA: Math.min(6, scoreA),
-    areaB: Math.min(6, scoreB),
-    areaC: Math.min(6, scoreC),
+    areaA: Math.min(6, scoreA), // Cap score at 6
+    areaB: Math.min(6, scoreB), // Cap score at 6
+    areaC: Math.min(6, scoreC), // Cap score at 6
   };
 }
+/**
+ * Computes the average score across all three areas.
+ * This average is used to determine the overall risk level and headline on the results screen.
+ * @param areaScores The calculated scores for each area.
+ * @returns The average score.
+ */
 export function computeAverageScore(areaScores: AreaScores): number {
   const totalScore = areaScores.areaA + areaScores.areaB + areaScores.areaC;
-  // Average score across the three areas to normalize it for overall rating.
   return totalScore / 3;
 }
 export type MaturityLevel = 'high' | 'medium' | 'low';
@@ -215,6 +243,12 @@ export type ResultLabel = {
   color: string;
   bgColor: string;
 };
+/**
+ * Derives a user-friendly label and color coding for a single area based on its score.
+ * This translates the numeric score (0-6) into a qualitative assessment (e.g., "Hohes Risiko").
+ * @param score The score for a specific area (0-6).
+ * @returns An object with the maturity level, display text, and Tailwind CSS classes.
+ */
 export function deriveAreaLabel(score: number): ResultLabel {
   if (score >= 5) { // 5-6 points
     return { level: 'high', text: 'Geringes Risiko / Hohe Reife', color: 'text-green-700 dark:text-green-300', bgColor: 'bg-green-100 dark:bg-green-900/50' };
@@ -225,6 +259,11 @@ export function deriveAreaLabel(score: number): ResultLabel {
   // 0-2 points
   return { level: 'low', text: 'Hohes Risiko / Niedrige Reife', color: 'text-red-700 dark:text-red-300', bgColor: 'bg-red-100 dark:bg-red-900/50' };
 }
+/**
+ * Derives the main headline and summary text for the results screen based on the average score.
+ * @param averageScore The average score across all three areas.
+ * @returns An object containing the headline and summary text.
+ */
 export function deriveOverallLabel(averageScore: number): { headline: string; summary: string } {
   if (averageScore >= 4.5) {
     return {
@@ -245,10 +284,10 @@ export function deriveOverallLabel(averageScore: number): { headline: string; su
 }
 export const areaDetails = {
   areaA: { title: 'VPN / Remote Access', description: 'Sicherheit und Performance für deine Remote-Mitarbeitenden.' },
-  areaB: { title: 'Web & Online-Prozesse', description: 'Schutz deiner Webseiten und gesch��ftskritischen Anwendungen.' },
+  areaB: { title: 'Web & Online-Prozesse', description: 'Schutz deiner Webseiten und geschäftskritischen Anwendungen.' },
   areaC: { title: 'Mitarbeiter-Sicherheit (Awareness)', description: 'Die menschliche Firewall deines Unternehmens stärken.' },
 };
-// Concise texts for better screen reader experience.
+// Concise texts for the result cards, providing a brief explanation for each maturity level.
 export const resultTexts: Record<MaturityLevel, string> = {
   low: 'In diesem Bereich besteht ein erhöhtes Risiko. Angriffe oder Ausfälle könnten schnell geschäftskritische Auswirkungen haben.',
   medium: 'Du hast eine Basis geschaffen, profitierst aber deutlich von modernen Zero-Trust- und Cloud-Security-Ansätzen.',

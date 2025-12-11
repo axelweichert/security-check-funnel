@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Lead } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,16 +18,29 @@ import { motion } from 'framer-motion';
 import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#22c55e' };
+/**
+ * Determines the maturity level based on the average score.
+ * @param avgScore The average score from the lead's funnel results.
+ * @returns 'high', 'medium', or 'low' maturity level.
+ */
 const getMaturityLevel = (avgScore: number): 'high' | 'medium' | 'low' => {
   if (avgScore >= 4.5) return 'high';
   if (avgScore >= 2.5) return 'medium';
   return 'low';
 };
+/**
+ * Maps maturity levels to display text and badge variants for the UI.
+ */
 const maturityLabels: Record<'high' | 'medium' | 'low', { text: string, variant: "default" | "secondary" | "destructive" | "outline" | null | undefined }> = {
     high: { text: 'Solide', variant: 'default' },
     medium: { text: 'Mittel', variant: 'secondary' },
     low: { text: 'Hoch', variant: 'destructive' },
 };
+/**
+ * A simple login component for the admin dashboard.
+ * Uses localStorage for mock authentication. In a real-world scenario,
+ * this would be replaced with a proper authentication service (e.g., OAuth, JWT).
+ */
 const AdminLogin = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -35,6 +48,7 @@ const AdminLogin = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
     const navigate = useNavigate();
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
+        // Hardcoded credentials for demonstration purposes.
         if (username === 'admin' && password === 'wmG7V6BNifmGjv7rEkh2') {
             localStorage.setItem('admin_auth', JSON.stringify({ user: username, pass: password }));
             onLoginSuccess();
@@ -63,10 +77,16 @@ const AdminLogin = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
         </div>
     );
 };
+/**
+ * The main page for the Admin Dashboard.
+ * It fetches and displays leads from the `/api/leads` endpoint,
+ * provides filtering capabilities, and visualizes data with a pie chart.
+ */
 export function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [filter, setFilter] = useState('');
   const navigate = useNavigate();
+  // On component mount, check for authentication credentials in localStorage.
   useEffect(() => {
     try {
       const auth = JSON.parse(localStorage.getItem('admin_auth') || 'null');
@@ -77,6 +97,13 @@ export function AdminPage() {
       setIsAuthenticated(false);
     }
   }, []);
+  /**
+   * Fetches leads from the API using React Query's `useInfiniteQuery` for pagination.
+   * - `queryKey`: Uniquely identifies this query for caching.
+   * - `queryFn`: The function that fetches the data. It receives a `pageParam` which is the cursor for the next page.
+   * - `getNextPageParam`: Extracts the cursor from the last fetched page to be used as `pageParam` for the next fetch.
+   * - `initialPageParam`: The initial cursor value (null for the first page).
+   */
   const {
     data,
     error,
@@ -91,18 +118,26 @@ export function AdminPage() {
     getNextPageParam: (lastPage) => lastPage.next,
     initialPageParam: null,
   });
+  // Display an error toast if fetching fails.
   useEffect(() => {
     if (isError && error) {
       toast.error(`Fehler beim Laden der Leads: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     }
   }, [isError, error]);
+  // Flattens the paginated data from React Query into a single array of leads.
   const allLeads = useMemo(() => data?.pages.flatMap(page => page.items) ?? [], [data]);
+  // Filters the leads based on the user's input in the search field.
   const filteredLeads = useMemo(() => {
     return allLeads.filter(lead =>
       lead.company.toLowerCase().includes(filter.toLowerCase()) ||
       lead.contact.toLowerCase().includes(filter.toLowerCase())
     );
   }, [allLeads, filter]);
+  /**
+   * Aggregates lead data for the pie chart.
+   * It counts the number of leads in each maturity level (low, medium, high).
+   * `useMemo` ensures this computation only runs when the list of leads changes.
+   */
   const chartData = useMemo(() => {
     if (allLeads.length === 0) return [];
     const counts = { low: 0, medium: 0, high: 0 };
@@ -116,6 +151,7 @@ export function AdminPage() {
       { name: 'Solide aufgestellt', value: counts.high, color: COLORS.high },
     ].filter(d => d.value > 0);
   }, [allLeads]);
+  // Logs the user out by clearing localStorage and resetting the auth state.
   const handleLogout = useCallback(() => {
     localStorage.removeItem('admin_auth');
     setIsAuthenticated(false);
@@ -221,7 +257,7 @@ export function AdminPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 </motion.div>
-              ) : !isLoading && (<div className="h-64 flex items-center justify-center text-muted-foreground">Keine Daten f��r das Diagramm.</div>)}
+              ) : !isLoading && (<div className="h-64 flex items-center justify-center text-muted-foreground">Keine Daten für das Diagramm.</div>)}
             </CardContent>
           </Card>
         </div>
@@ -230,11 +266,17 @@ export function AdminPage() {
     </div>
   );
 }
+/**
+ * A skeleton loader component for the leads table.
+ */
 const TableSkeleton = () => (
   <div className="space-y-2">
     {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
   </div>
 );
+/**
+ * An alert component to display data fetching errors.
+ */
 const ErrorAlert = ({ error }: { error: Error }) => (
   <Alert variant="destructive">
     <AlertTriangle className="h-4 w-4" />

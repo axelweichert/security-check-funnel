@@ -9,8 +9,12 @@ import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-re
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Footer } from '@/components/Footer';
+/**
+ * Defines the possible steps in the security check funnel.
+ * Each string corresponds to a specific view/screen in the user journey.
+ */
 type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
-// Client feedback: Update areaC title to prevent truncation.
+// Client feedback: Update areaC title to prevent truncation on smaller screens.
 const areaDetails = {
   ...originalAreaDetails,
   areaC: {
@@ -18,18 +22,32 @@ const areaDetails = {
     title: "Mitarbeiter-Sicherheit",
   }
 };
+/**
+ * The main component for the von Busch Security Funnel.
+ * It orchestrates the entire multi-step process, from the start screen to the final thank you page.
+ * State is managed using a combination of React's `useState` for the current step and
+ * Zustand (`useFunnelStore`) for persisting user answers across the funnel.
+ */
 export function HomePage() {
+  // Manages the current visible step/screen of the funnel.
   const [step, setStep] = useState<FunnelStep>('start');
+  // Retrieves state and actions from the Zustand store for managing answers.
+  // This ensures answers are persisted even if the user refreshes the page.
   const answers = useFunnelStore(s => s.answers);
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const resetFunnel = useFunnelStore(s => s.reset);
+  // Computes scores based on the current answers.
+  // `useMemo` ensures this calculation only runs when answers change.
   const scores = useMemo(() => {
     const areaScores = computeAreaScores(answers);
     const average = computeAverageScore(areaScores);
     return { ...areaScores, average };
   }, [answers]);
+  // Memoize answers for Level 1 to determine which questions to show in subsequent levels.
   const l1aAnswer = answers['L1-A'];
   const l1bAnswer = answers['L1-B'];
+  // Dynamically determines the questions for Level 2 based on answers from Level 1.
+  // This creates a conditional question flow.
   const level2Questions = useMemo(() => [
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A1'],
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A2'],
@@ -37,14 +55,21 @@ export function HomePage() {
     (l1bAnswer === 'L1-B-1' || l1bAnswer === 'L1-B-2') && questions['L2-B2'],
     questions['L2-C1'],
   ].filter((q): q is Question => !!q), [l1aAnswer, l1bAnswer]);
+  // Dynamically determines the questions for Level 3.
+  // Shows an alternative question for Area A if the user has no VPN.
   const level3Questions = useMemo(() => [
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') ? questions['L3-A1'] : questions['L3-A1-ALT'],
     questions['L3-B1'],
     questions['L3-C1'],
   ].filter((q): q is Question => !!q), [l1aAnswer]);
+  // Validation checks to enable/disable the 'Next' button in each step.
   const isLevel1Complete = answers['L1-A'] && answers['L1-B'] && answers['L1-C'];
   const isLevel2Complete = level2Questions.every(q => answers[q.id]);
   const isLevel3Complete = level3Questions.every(q => answers[q.id]);
+  /**
+   * Renders the appropriate component based on the current `step` state.
+   * This function acts as a router for the single-page funnel flow.
+   */
   const renderContent = () => {
     switch (step) {
       case 'start': return <StartScreen onStart={() => setStep('level1')} />;
@@ -58,6 +83,7 @@ export function HomePage() {
     }
   };
   return (
+    // Root wrapper with standard gutters for consistent layout.
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
         <AnimatePresence mode="wait">
@@ -67,6 +93,10 @@ export function HomePage() {
     </div>
   );
 }
+/**
+ * The initial landing screen of the funnel.
+ * Presents the value proposition and a call-to-action to start the check.
+ */
 const StartScreen = ({ onStart }: { onStart: () => void }) => (
   <motion.div
     key="start"
@@ -117,6 +147,9 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => (
     <Footer />
   </motion.div>
 );
+/**
+ * A reusable card component for displaying key benefits on the start screen.
+ */
 const InfoCard = ({ icon, title, text }: { icon: React.ReactNode, title: string, text: string }) => (
     <div className="glass p-6 rounded-xl text-center flex flex-col items-center">
         <motion.div whileHover={{ scale: 1.1 }} className="mb-4">{icon}</motion.div>
@@ -124,6 +157,9 @@ const InfoCard = ({ icon, title, text }: { icon: React.ReactNode, title: string,
         <p className="text-muted-foreground text-sm">{text}</p>
     </div>
 );
+/**
+ * Framer Motion variants for staggering animations in lists.
+ */
 const listVariants = {
   visible: {
     opacity: 1,
@@ -136,10 +172,21 @@ const listVariants = {
     opacity: 0,
   },
 };
+/**
+ * A generic component for rendering a step in the quiz.
+ * It displays a progress bar and a list of questions for the current step.
+ * @param {number} stepIndex - The current step number (0-indexed).
+ * @param {string} title - The title of the current step.
+ * @param {Question[]} questions - An array of question objects to display.
+ * @param {() => void} onBack - Callback function to navigate to the previous step.
+ * @param {() => void} onNext - Callback function to navigate to the next step.
+ * @param {boolean} isNextDisabled - Controls whether the 'Next' button is enabled.
+ */
 const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
   const answers = useFunnelStore(s => s.answers);
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Focus the container on mount for better accessibility and keyboard navigation.
   useEffect(() => {
     containerRef.current?.focus();
   }, []);
@@ -176,6 +223,10 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
     </motion.div>
   );
 };
+/**
+ * Displays the results of the security check based on the calculated scores.
+ * Shows an overall assessment and a breakdown for each security area.
+ */
 const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) => {
   const overall = deriveOverallLabel(scores.average);
   const areaALabel = deriveAreaLabel(scores.areaA);
@@ -220,6 +271,9 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
     </motion.div>
   );
 };
+/**
+ * A card component for displaying the result of a single security area.
+ */
 const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title: string, label: any, text: string }) => (
   <Card className="flex flex-col glass">
     {/* Client Feedback: Prevented line wrapping on area titles (e.g., areaC) with nowrap/flex-shrink, adjusted sizing/padding for responsive polish without text changes. */}
@@ -239,6 +293,10 @@ const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title
     </CardContent>
   </Card>
 );
+/**
+ * The final screen shown after the user successfully submits the lead form.
+ * Provides confirmation and next steps.
+ */
 const ThanksScreen = ({ onReset }: { onReset: () => void }) => (
   <motion.div
     key="thanks"
