@@ -73,7 +73,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     let script = document.getElementById(scriptId);
     if (analyticsConsent) {
       if (!script) {
-        script = document.createElement('script');
+        script = document.createElement('script') as HTMLScriptElement;
         script.id = scriptId;
         script.defer = true;
         script.setAttribute('data-domain', 'vonbusch.digital');

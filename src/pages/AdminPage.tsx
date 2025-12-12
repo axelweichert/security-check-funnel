@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Lead } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
-const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#4264E3' };
+const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#1a56db' };
 const getMaturityLevel = (avgScore: number): 'high' | 'medium' | 'low' => {
   if (avgScore >= 4.5) return 'high';
   if (avgScore >= 2.5) return 'medium';
@@ -82,10 +82,9 @@ export function AdminPage() {
       setIsAuthenticated(false);
     }
   }, []);
-  const fetchLeads = useCallback(({ pageParam = null }: { pageParam?: string | null }) => {
-    return api(`/api/leads?limit=10&cursor=${pageParam || ''}`);
+  const fetchLeads = useCallback(async ({ pageParam = null }: { pageParam?: string | null }) => {
+    return api<{ items: Lead[]; next: string | null }>(`/api/leads?limit=10&cursor=${pageParam || ''}`);
   }, []);
-
   const {
     data,
     error,
@@ -94,10 +93,10 @@ export function AdminPage() {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useInfiniteQuery<{ items: Lead[]; next: string | null }>({
+  } = useInfiniteQuery<InfiniteData<{ items: Lead[]; next: string | null }>, Error>({
     queryKey: ['leads'],
     queryFn: fetchLeads,
-    getNextPageParam: (lastPage) => lastPage.next,
+    getNextPageParam: (lastPage) => lastPage.pages[lastPage.pages.length - 1].next,
     initialPageParam: null,
   });
   useEffect(() => {
@@ -105,7 +104,7 @@ export function AdminPage() {
       toast.error(`Fehler beim Laden der Leads: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     }
   }, [isError, error]);
-  const allLeads = useMemo(() => data?.pages.flatMap(page => page.items) ?? [], [data]);
+  const allLeads = useMemo(() => data?.pages.flatMap((page: { items: Lead[]; next: string | null }) => page.items) ?? [] as Lead[], [data]);
   const filteredLeads = useMemo(() => {
     return allLeads.filter(lead =>
       lead.company.toLowerCase().includes(filter.toLowerCase()) ||
