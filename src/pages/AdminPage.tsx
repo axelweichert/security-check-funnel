@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Lead } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -82,8 +82,9 @@ export function AdminPage() {
       setIsAuthenticated(false);
     }
   }, []);
-  const fetchLeads = useCallback(async ({ pageParam = null }: { pageParam?: string | null }) => {
-    return api<{ items: Lead[]; next: string | null }>(`/api/leads?limit=10&cursor=${pageParam || ''}`);
+  const fetchLeads = useCallback(async ({ pageParam }: { pageParam?: unknown }) => {
+    const cursor = pageParam ? String(pageParam) : null;
+    return api<{ items: Lead[]; next: string | null }>(`/api/leads?limit=10&cursor=${cursor ?? ''}`);
   }, []);
   const {
     data,
@@ -93,10 +94,10 @@ export function AdminPage() {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useInfiniteQuery<InfiniteData<{ items: Lead[]; next: string | null }>, Error>({
+  } = useInfiniteQuery<{ items: Lead[]; next: string | null }, Error>({
     queryKey: ['leads'],
     queryFn: fetchLeads,
-    getNextPageParam: (lastPage) => lastPage.pages[lastPage.pages.length - 1].next,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     initialPageParam: null,
   });
   useEffect(() => {
@@ -104,7 +105,7 @@ export function AdminPage() {
       toast.error(`Fehler beim Laden der Leads: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     }
   }, [isError, error]);
-  const allLeads = useMemo(() => data?.pages.flatMap((page: { items: Lead[]; next: string | null }) => page.items) ?? [] as Lead[], [data]);
+  const allLeads = useMemo(() => data?.pages.flatMap((page) => page.items ?? []) ?? [], [data]);
   const filteredLeads = useMemo(() => {
     return allLeads.filter(lead =>
       lead.company.toLowerCase().includes(filter.toLowerCase()) ||
@@ -157,7 +158,7 @@ export function AdminPage() {
             </CardHeader>
             <CardContent>
               {isLoading && <TableSkeleton />}
-              {error && <ErrorAlert error={error as Error} />}
+              {isError && <ErrorAlert error={error} />}
               {data && (
                 <div className="border rounded-md overflow-x-auto">
                   <Table>
