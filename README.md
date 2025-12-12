@@ -15,26 +15,26 @@ A stylish 3-step Security Check funnel (in German and English) with scoring, res
 - **Frontend**: React 18, React Router, Tailwind CSS v3, shadcn/ui (Button, Card, Input, RadioGroup, Form, etc.), framer-motion (animations), lucide-react (icons), react-hook-form + Zod (validation), @tanstack/react-query (API), sonner (toasts), clsx/tailwind-merge (utilities).
 - **State Management**: Zustand (for UI state and language preference; primitive selectors only to avoid re-renders).
 - **Backend**: Cloudflare Workers, Hono (routing), Cloudflare Durable Objects (via IndexedEntity pattern for leads storage).
-- **Build Tools**: Vite (dev/build), Bun (package manager), TypeScript.
+- **Build Tools**: Vite (dev/build), npm (package manager), TypeScript.
 - **Other**: Recharts (optional charts), Date-fns (utils), Immer (immutable updates).
 ## Quick Start
 1. Clone the repository.
-2. Install dependencies with Bun: `bun install`.
-3. Run in development: `bun run dev`.
+2. Install dependencies with npm: `npm install`.
+3. Run in development: `npm run dev`.
 4. Open http://localhost:3000 (or configured port).
 5. For production deployment, see the Deployment section.
 ## Installation
-This project uses Bun as the package manager for faster installs and runs.
-1. Ensure Bun is installed: `curl -fsSL https://bun.sh/install | bash` (or via npm: `npm i -g bun`).
+This project uses npm as the recommended package manager for compatibility with CI/CD environments like Cloudflare Pages.
+1. Ensure Node.js and npm are installed.
 2. Clone the repo: `git clone <repository-url> && cd vonbusch-security-funnel`.
-3. Install dependencies: `bun install`.
-4. Generate Cloudflare types (if needed): `bun run cf-typegen`.
+3. Install dependencies: `npm install`.
+4. Generate Cloudflare types (if needed): `npm run cf-typegen`.
 No additional configuration is required for local development. The project is pre-configured with Cloudflare Workers integration.
 ## Development
-- **Run Development Server**: `bun run dev` – Starts Vite dev server with hot reload at http://localhost:3000.
-- **Build for Production**: `bun run build` – Outputs to `dist/` for deployment.
-- **Lint Code**: `bun run lint` – Runs ESLint on the codebase.
-- **Type Check**: TypeScript is enforced; run `bun tsc --noEmit` for verification.
+- **Run Development Server**: `npm run dev` – Starts Vite dev server with hot reload at http://localhost:3000.
+- **Build for Production**: `npm run build` – Outputs to `dist/` for deployment.
+- **Lint Code**: `npm run lint` – Runs ESLint on the codebase.
+- **Type Check**: TypeScript is enforced; run `npx tsc --noEmit` for verification.
 - **API Testing**: The backend runs alongside the frontend in dev mode. Test endpoints like `/api/leads` using tools like curl or the browser dev tools.
 - **Environment**: No env vars needed for core functionality. For custom Worker bindings, refer to `wrangler.jsonc` (do not modify bindings).
 ### Project Structure
@@ -63,15 +63,22 @@ The application is a single-page funnel:
 4. **Lead Form**: Collects data and submits to `/api/leads`.
 5. **Thank You**: Confirmation with follow-up CTAs.
 All interactions are handled client-side until lead submission. Mock data is not used in production; leads are persisted via Durable Objects.
-For testing: Navigate through the funnel in dev mode. Submit a lead to verify API persistence (check Worker logs via `wrangler tail`).
+For testing: Navigate through the funnel in dev mode. Submit a lead to verify API persistence (check Worker logs via `npx wrangler tail`).
 ## Deployment
 Deploy to Cloudflare Workers for global edge performance with Durable Objects for state.
-1. Install Wrangler: `bun add -g wrangler`.
+1. Install Wrangler CLI: `npm install -g wrangler`.
 2. Login: `wrangler login`.
-3. Deploy: `bun run deploy` (builds frontend and deploys Worker).
-4. Preview: Use `wrangler dev` for local Worker simulation.
+3. Deploy: `npm run deploy` (builds frontend and deploys Worker).
+4. Preview: Use `npx wrangler dev` for local Worker simulation.
 The frontend assets are served via Cloudflare's SPA handling, with API routes proxied to the Worker.
 [cloudflarebutton]
+### Deployment to Cloudflare Pages (Production Workflow)
+This project is optimized for deployment on Cloudflare Pages. The previous `bun.lockb` file caused deployment issues and has been removed in favor of `package-lock.json`.
+**To ensure successful deployments, follow these steps:**
+1. **Delete `bun.lockb`**: If you have a local copy, remove it: `rm bun.lockb`.
+2. **Generate `package-lock.json`**: Run `npm install` to generate the lockfile.
+3. **Commit the Lockfile**: Add and commit `package-lock.json` to your repository. **Do not** commit `bun.lockb`.
+Cloudflare Pages will automatically detect `package-lock.json` and use `npm` for the build, resolving any lockfile conflicts.
 **Custom Domain**: After deployment, add a custom domain in the Cloudflare dashboard. Ensure `wrangler.jsonc` assets config handles SPA routing.
 **Phased Rollout**:
 - Phase 1: Core funnel (current implementation).
