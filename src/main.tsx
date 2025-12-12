@@ -13,7 +13,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { Layout } from '@/components/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ThemeProvider } from 'next-themes';
+
 const HomePage = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.HomePage })));
 const AdminPage = lazy(() => import('@/pages/AdminPage').then(module => ({ default: module.AdminPage })));
 const queryClient = new QueryClient();
@@ -34,7 +34,7 @@ let root: Root | null = null;
 function renderApp() {
   const app = (
     <StrictMode>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+
         <QueryClientProvider client={queryClient}>
           <Layout>
             <ErrorBoundary>
@@ -44,7 +44,7 @@ function renderApp() {
             </ErrorBoundary>
           </Layout>
         </QueryClientProvider>
-      </ThemeProvider>
+
     </StrictMode>
   );
   if (import.meta.hot) {
