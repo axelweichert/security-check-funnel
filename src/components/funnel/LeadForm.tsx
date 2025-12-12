@@ -29,6 +29,8 @@ import { Loader2, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Lead } from "@shared/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrentLang } from "@/stores/useLangStore";
+import { t } from "@/lib/i18n";
 const formSchema = z.object({
   company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
   contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
@@ -40,6 +42,7 @@ const formSchema = z.object({
   consent: z.boolean().refine((val) => val === true, {
     message: "Sie müssen der Kontaktaufnahme zustimmen.",
   }),
+  analyticsConsent: z.boolean().optional(),
 });
 type LeadFormValues = z.infer<typeof formSchema>;
 interface LeadFormProps {
@@ -47,6 +50,7 @@ interface LeadFormProps {
   onSuccess: () => void;
 }
 export function LeadForm({ scores, onSuccess }: LeadFormProps) {
+  const lang = useCurrentLang();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(formSchema),
@@ -59,9 +63,9 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       role: "",
       notes: "",
       consent: false,
+      analyticsConsent: false,
     },
   });
-  // Stabilize scores object for useCallback dependency array
   const stableScores = useMemo(() => JSON.stringify(scores), [scores]);
   const onSubmit = useCallback(async (values: LeadFormValues) => {
     setIsSubmitting(true);
@@ -80,8 +84,15 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
         method: 'POST',
         body: JSON.stringify(leadPayload),
       });
+      if (values.analyticsConsent) {
+        localStorage.setItem('analyticsConsent', 'true');
+        window.dispatchEvent(new CustomEvent('analyticsConsentChanged'));
+      }
       toast.success("Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.");
-      // Client feedback: Open mail client with pre-filled body
+      const areaALabel = deriveAreaLabel(currentScores.areaA, lang);
+      const areaBLabel = deriveAreaLabel(currentScores.areaB, lang);
+      const areaCLabel = deriveAreaLabel(currentScores.areaC, lang);
+      const overallLabel = deriveOverallLabel(currentScores.average, lang);
       const formattedBody = [
         "Firmendaten:",
         `- Firma: ${values.company}`,
@@ -93,10 +104,10 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
         values.notes ? `- Notizen: ${values.notes}` : null,
         "",
         "Score-Zusammenfassung:",
-        `- VPN/Remote: ${currentScores.areaA}/6 (${deriveAreaLabel(currentScores.areaA).text})`,
-        `- Web/Online: ${currentScores.areaB}/6 (${deriveAreaLabel(currentScores.areaB).text})`,
-        `- Mitarbeiter-Sicherheit: ${currentScores.areaC}/6 (${deriveAreaLabel(currentScores.areaC).text})`,
-        `- Gesamt: ${currentScores.average.toFixed(1)}/6 (${deriveOverallLabel(currentScores.average).headline})`,
+        `- VPN/Remote: ${currentScores.areaA}/6 (${areaALabel.text})`,
+        `- Web/Online: ${currentScores.areaB}/6 (${areaBLabel.text})`,
+        `- Mitarbeiter-Sicherheit: ${currentScores.areaC}/6 (${areaCLabel.text})`,
+        `- Gesamt: ${currentScores.average.toFixed(1)}/6 (${overallLabel.headline})`,
       ].filter(line => line !== null).join("\n");
       const mailtoUrl = `mailto:security@vonbusch.digital?subject=${encodeURIComponent(`Security-Check Anfrage von ${values.company}`)}&body=${encodeURIComponent(formattedBody)}`;
       window.location.href = mailtoUrl;
@@ -108,7 +119,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [stableScores, form, onSuccess]);
+  }, [stableScores, form, onSuccess, lang]);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -117,37 +128,36 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       className="w-full max-w-3xl mx-auto bg-card p-6 md:p-8 rounded-xl shadow-soft border"
     >
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold font-display text-foreground">Dein Ergebnis als Grundlage für konkrete Maßnahmen</h2>
+        <h2 className="text-3xl font-bold font-display text-foreground">{t(lang, 'formHeadline')}</h2>
         <p className="text-muted-foreground mt-2 text-lg">
-          Trage deine Kontaktdaten ein <Heart className="inline h-4 w-4 text-red-500" /> wir melden uns mit einer individuellen Einschätzung und konkreten Vorschlägen für dein Unternehmen.
+          {t(lang, 'formSubline').split('–')[0]} <Heart className="inline h-4 w-4 text-red-500" /> {t(lang, 'formSubline').split('–')[1]}
         </p>
       </div>
       <Form {...form}>
-        {/* UTF-8: Umlauts in labels (ä, ß) verified for GDPR-compliant display */}
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField control={form.control} name="company" render={({ field }) => (
               <FormItem>
-                <FormLabel>Firmenname</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="Ihre Firma GmbH" {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'company')}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'companyPlaceholder')} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="contact" render={({ field }) => (
               <FormItem>
-                <FormLabel>Ansprechpartner (Vor- und Nachname)</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="Max Mustermann" {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'contact')}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'contactPlaceholder')} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
           </div>
           <FormField control={form.control} name="employeesRange" render={({ field }) => (
             <FormItem>
-              <FormLabel>Anzahl Mitarbeitende</FormLabel>
+              <FormLabel>{t(lang, 'employees')}</FormLabel>
               {isSubmitting ? <Skeleton className="h-10 w-full" /> :
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger><SelectValue placeholder="Bitte auswählen" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t(lang, 'employeesPlaceholder')} /></SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="1-20">1–20</SelectItem>
@@ -164,30 +174,30 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField control={form.control} name="email" render={({ field }) => (
               <FormItem>
-                <FormLabel>E-Mail-Adresse</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input type="email" placeholder="max.mustermann@firma.de" {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'email')}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input type="email" placeholder={t(lang, 'emailPlaceholder')} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="phone" render={({ field }) => (
               <FormItem>
-                <FormLabel>Telefonnummer</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="+49 123 456789" {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'phone')}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'phonePlaceholder')} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
           </div>
           <FormField control={form.control} name="role" render={({ field }) => (
             <FormItem>
-              <FormLabel>Ihre Rolle/Funktion <span className="text-muted-foreground">(Optional)</span></FormLabel>
-              <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder="z.B. IT-Leitung, Geschäftsführung" {...field} />}</FormControl>
+              <FormLabel>{t(lang, 'role')} <span className="text-muted-foreground">(Optional)</span></FormLabel>
+              <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'rolePlaceholder')} {...field} />}</FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="notes" render={({ field }) => (
             <FormItem>
-              <FormLabel>Was ist aktuell deine größte Herausforderung in IT & Security? <span className="text-muted-foreground">(Optional)</span></FormLabel>
-              <FormControl>{isSubmitting ? <Skeleton className="h-24 w-full" /> : <Textarea placeholder="Beschreiben Sie kurz Ihre Situation..." {...field} />}</FormControl>
+              <FormLabel>{t(lang, 'notes')} <span className="text-muted-foreground">(Optional)</span></FormLabel>
+              <FormControl>{isSubmitting ? <Skeleton className="h-24 w-full" /> : <Textarea placeholder={t(lang, 'notesPlaceholder')} {...field} />}</FormControl>
               <FormMessage />
             </FormItem>
           )} />
@@ -195,17 +205,25 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
               <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
               <div className="space-y-1 leading-none">
-                <Label htmlFor="consent" className="cursor-pointer">Einverständnis</Label>
-                <p className="text-sm text-muted-foreground">
-                  Ich bin einverstanden, dass die von Busch GmbH und HXNWRK meine Angaben zur Kontaktaufnahme und zur individuellen Beratung zu IT-Security- und Cloud-Lösungen nutzen.
-                </p>
+                <Label htmlFor="consent" className="cursor-pointer">{t(lang, 'consent')}</Label>
+                <p className="text-sm text-muted-foreground">{t(lang, 'consentText')}</p>
+                <FormMessage />
+              </div>
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="analyticsConsent" render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
+              <div className="space-y-1 leading-none">
+                <Label htmlFor="analyticsConsent" className="cursor-pointer">{t(lang, 'analyticsConsent')}</Label>
+                <p className="text-sm text-muted-foreground">{t(lang, 'analyticsConsentText')}</p>
                 <FormMessage />
               </div>
             </FormItem>
           )} />
           <Button type="submit" size="lg" className="w-full btn-gradient text-lg transition-transform duration-200 hover:scale-105 active:scale-95" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-            Ergebnis absenden & Beratung anfordern
+            {t(lang, 'submitAndConsult')}
           </Button>
         </form>
       </Form>

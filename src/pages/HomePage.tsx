@@ -4,79 +4,50 @@ import { Button } from '@/components/ui/button';
 import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
 import { LeadForm } from '@/components/funnel/LeadForm';
-import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, areaDetails as originalAreaDetails, resultTexts, type Question } from '@/lib/funnel';
+import { useFunnelStore, getQuestions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, getAreaDetails, getResultTexts, type Question } from '@/lib/funnel';
 import { useShallow } from 'zustand/react/shallow';
 import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Footer } from '@/components/Footer';
-
-/**
- * Defines the possible steps in the security check funnel.
- * Each string corresponds to a specific view/screen in the user journey.
- */
+import { useCurrentLang } from '@/stores/useLangStore';
+import { t } from '@/lib/i18n';
 type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
-// Client feedback: Update areaC title to prevent truncation on smaller screens.
-const areaDetails = {
-  ...originalAreaDetails,
-  areaC: {
-    ...originalAreaDetails.areaC,
-    title: "Mitarbeiter-Sicherheit",
-  }
-};
-/**
- * The main component for the von Busch Security Funnel.
- * It orchestrates the entire multi-step process, from the start screen to the final thank you page.
- * State is managed using a combination of React's `useState` for the current step and
- * Zustand (`useFunnelStore`) for persisting user answers across the funnel.
- */
 export function HomePage() {
-  // Manages the current visible step/screen of the funnel.
+  const lang = useCurrentLang();
   const [step, setStep] = useState<FunnelStep>('start');
-  // Retrieves state and actions from the Zustand store for managing answers.
-  // This ensures answers are persisted even if the user refreshes the page.
   const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const resetFunnel = useFunnelStore(s => s.reset);
   const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
   const l1bAnswer = useFunnelStore(s => s.answers['L1-B']);
-  // Computes scores based on the current answers.
-  // `useMemo` ensures this calculation only runs when answers change.
+  const questions = useMemo(() => getQuestions(lang), [lang]);
   const scores = useMemo(() => {
-    const areaScores = computeAreaScores(answers);
+    const areaScores = computeAreaScores(answers, lang);
     const average = computeAverageScore(areaScores);
     return { ...areaScores, average };
-  }, [answers]);
-  // Dynamically determines the questions for Level 2 based on answers from Level 1.
-  // This creates a conditional question flow.
+  }, [answers, lang]);
   const level2Questions = useMemo(() => [
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A1'],
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A2'],
     (l1bAnswer === 'L1-B-1' || l1bAnswer === 'L1-B-2') && questions['L2-B1'],
     (l1bAnswer === 'L1-B-1' || l1bAnswer === 'L1-B-2') && questions['L2-B2'],
     questions['L2-C1'],
-  ].filter((q): q is Question => !!q), [l1aAnswer, l1bAnswer]);
-  // Dynamically determines the questions for Level 3.
-  // Shows an alternative question for Area A if the user has no VPN.
+  ].filter((q): q is Question => !!q), [l1aAnswer, l1bAnswer, questions]);
   const level3Questions = useMemo(() => [
     (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') ? questions['L3-A1'] : questions['L3-A1-ALT'],
     questions['L3-B1'],
     questions['L3-C1'],
-  ].filter((q): q is Question => !!q), [l1aAnswer]);
-  // Validation checks to enable/disable the 'Next' button in each step.
+  ].filter((q): q is Question => !!q), [l1aAnswer, questions]);
   const isLevel1Complete = answers['L1-A'] && answers['L1-B'] && answers['L1-C'];
   const isLevel2Complete = level2Questions.every(q => answers[q.id]);
   const isLevel3Complete = level3Questions.every(q => answers[q.id]);
-  /**
-   * Renders the appropriate component based on the current `step` state.
-   * This function acts as a router for the single-page funnel flow.
-   */
   const renderContent = () => {
     switch (step) {
       case 'start': return <StartScreen onStart={() => setStep('level1')} />;
-      case 'level1': return <QuizStep key="level1" stepIndex={0} title="Basis-Check" questions={[questions['L1-A'], questions['L1-B'], questions['L1-C']]} onBack={() => setStep('start')} onNext={() => setStep('level2')} isNextDisabled={!isLevel1Complete} />;
-      case 'level2': return <QuizStep key="level2" stepIndex={1} title="Details zu deiner Umgebung" questions={level2Questions} onBack={() => setStep('level1')} onNext={() => setStep('level3')} isNextDisabled={!isLevel2Complete} />;
-      case 'level3': return <QuizStep key="level3" stepIndex={2} title="Einschätzung deiner Reifegrade" questions={level3Questions} onBack={() => setStep('level2')} onNext={() => setStep('results')} isNextDisabled={!isLevel3Complete} />;
+      case 'level1': return <QuizStep key="level1" stepIndex={0} questions={[questions['L1-A'], questions['L1-B'], questions['L1-C']]} onBack={() => setStep('start')} onNext={() => setStep('level2')} isNextDisabled={!isLevel1Complete} />;
+      case 'level2': return <QuizStep key="level2" stepIndex={1} questions={level2Questions} onBack={() => setStep('level1')} onNext={() => setStep('level3')} isNextDisabled={!isLevel2Complete} />;
+      case 'level3': return <QuizStep key="level3" stepIndex={2} questions={level3Questions} onBack={() => setStep('level2')} onNext={() => setStep('results')} isNextDisabled={!isLevel3Complete} />;
       case 'results': return <ResultsScreen scores={scores} onNext={() => setStep('form')} />;
       case 'form': return <LeadForm scores={scores} onSuccess={() => setStep('thanks')} />;
       case 'thanks': return <ThanksScreen onReset={() => { resetFunnel(); setStep('start'); }} />;
@@ -84,7 +55,6 @@ export function HomePage() {
     }
   };
   return (
-    // Root wrapper with standard gutters for consistent layout.
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
         <AnimatePresence mode="wait">
@@ -94,64 +64,58 @@ export function HomePage() {
     </div>
   );
 }
-/**
- * The initial landing screen of the funnel.
- * Presents the value proposition and a call-to-action to start the check.
- */
-const StartScreen = ({ onStart }: { onStart: () => void }) => (
-  <motion.div
-    key="start"
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.9 }}
-    transition={{ duration: 0.5, ease: "easeInOut" }}
-    className="text-center flex flex-col items-center space-y-8"
-    role="main"
-    aria-labelledby="main-heading"
-  >
-    <div className="space-y-4 max-w-4xl">
-      <h1 id="main-heading" className="text-5xl md:text-6xl font-bold font-display text-foreground leading-tight">
-        Wie widerstandsfähig ist dein Unternehmen gegen Cyberangriffe?
-      </h1>
-      <p className="text-lg md:text-xl text-muted-foreground text-balance">
-        Kurzer 3-Stufen-Check zu VPN, Web-Anwendungen und Mitarbeiter-Sicherheit – mit konkreten Handlungsempfehlungen.
-      </p>
-    </div>
+const StartScreen = ({ onStart }: { onStart: () => void }) => {
+  const lang = useCurrentLang();
+  return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      key="start"
+      initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="flex flex-col items-center space-y-4 w-full pt-4"
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="text-center flex flex-col items-center space-y-8"
+      role="main"
+      aria-labelledby="main-heading"
     >
-      <p className="text-2xl md:text-3xl text-primary font-semibold text-center max-w-2xl mx-auto leading-relaxed">
-        {/* Syntax verified: All strings properly escaped */}
-        <strong>Deutschland ist das drittmeist angegriffene Land der Welt im Cyberspace.</strong>
-      </p>
-      <Button variant="outline" size="lg" asChild>
-        <a href="https://radar.cloudflare.com/de-de/reports/ddos-2025-q3" target="_blank" rel="noopener noreferrer" aria-label="Cloudflare DDoS Threat Report Q3-2025 entdecken (öffnet in neuem Tab)">
-          <Shield className="mr-2 h-4 w-4" />
-          Cloudflare DDoS Threat Report Q3-2025 entdecken
-        </a>
-      </Button>
-    </motion.div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
-        <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title="Klare Einschätzung" text="Erhalte eine klare Einschätzung deines Security-Reifegrads." />
-        <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title="Moderne Best Practices" text="Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst." />
-        {/* Syntax verified: All strings properly escaped */}
-        <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title="Konkrete Unterstützung" text="Erfahre wie wir dich mit unserem ganzheitlichen Three60 Ansatz konkret unterstützen können." />
-    </div>
-    <div className="text-center space-y-4 pt-8">
-        <p className="text-muted-foreground">Dauer: ca. 2–3 Minuten</p>
-        <Button size="lg" className="btn-gradient px-10 py-6 text-xl font-semibold shadow-lg hover:shadow-primary/80 transition-all duration-300 hover:-translate-y-1" onClick={onStart} aria-label="Security-Check starten">
-            Jetzt Security-Check starten
+      <div className="space-y-4 max-w-4xl">
+        <h1 id="main-heading" className="text-5xl md:text-6xl font-bold font-display text-foreground leading-tight">
+          {t(lang, 'startHeadline')}
+        </h1>
+        <p className="text-lg md:text-xl text-muted-foreground text-balance">
+          {t(lang, 'startSubline')}
+        </p>
+      </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="flex flex-col items-center space-y-4 w-full pt-4"
+      >
+        <p className="text-2xl md:text-3xl text-primary font-semibold text-center max-w-2xl mx-auto leading-relaxed">
+          <strong>{t(lang, 'startHook')}</strong>
+        </p>
+        <Button variant="outline" size="lg" asChild>
+          <a href="https://radar.cloudflare.com/de-de/reports/ddos-2025-q3" target="_blank" rel="noopener noreferrer" aria-label="Cloudflare DDoS Threat Report Q3-2025 entdecken (öffnet in neuem Tab)">
+            <Shield className="mr-2 h-4 w-4" />
+            {t(lang, 'startHookCta')}
+          </a>
         </Button>
-    </div>
-    <Footer />
-  </motion.div>
-);
-/**
- * A reusable card component for displaying key benefits on the start screen.
- */
+      </motion.div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
+          <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title={t(lang, 'startBenefit1Title')} text={t(lang, 'startBenefit1')} />
+          <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title={t(lang, 'startBenefit2Title')} text={t(lang, 'startBenefit2')} />
+          <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title={t(lang, 'startBenefit3Title')} text={t(lang, 'startBenefit3')} />
+      </div>
+      <div className="text-center space-y-4 pt-8">
+          <p className="text-muted-foreground">{t(lang, 'startDuration')}</p>
+          <Button size="lg" className="btn-gradient px-10 py-6 text-xl font-semibold shadow-lg hover:shadow-primary/80 transition-all duration-300 hover:-translate-y-1" onClick={onStart} aria-label="Security-Check starten">
+              {t(lang, 'startCta')}
+          </Button>
+      </div>
+      <Footer />
+    </motion.div>
+  );
+};
 const InfoCard = ({ icon, title, text }: { icon: React.ReactNode, title: string, text: string }) => (
     <div className="glass p-6 rounded-xl text-center flex flex-col items-center">
         <motion.div whileHover={{ scale: 1.1 }} className="mb-4">{icon}</motion.div>
@@ -159,37 +123,17 @@ const InfoCard = ({ icon, title, text }: { icon: React.ReactNode, title: string,
         <p className="text-muted-foreground text-sm">{text}</p>
     </div>
 );
-/**
- * Framer Motion variants for staggering animations in lists.
- */
 const listVariants = {
-  visible: {
-    opacity: 1,
-    transition: {
-      when: "beforeChildren",
-      staggerChildren: 0.1,
-    },
-  },
-  hidden: {
-    opacity: 0,
-  },
+  visible: { opacity: 1, transition: { when: "beforeChildren", staggerChildren: 0.1 } },
+  hidden: { opacity: 0 },
 };
-/**
- * A generic component for rendering a step in the quiz.
- * It displays a progress bar and a list of questions for the current step.
- * @param {number} stepIndex - The current step number (0-indexed).
- * @param {string} title - The title of the current step.
- * @param {Question[]} questions - An array of question objects to display.
- * @param {() => void} onBack - Callback function to navigate to the previous step.
- * @param {() => void} onNext - Callback function to navigate to the next step.
- * @param {boolean} isNextDisabled - Controls whether the 'Next' button is enabled.
- */
-const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
-  // Use shallow selector for answers object; setter remains a primitive selector.
+const QuizStep = ({ stepIndex, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
+  const lang = useCurrentLang();
   const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Focus the container on mount for better accessibility and keyboard navigation.
+  const stepTitles = [t(lang, 'step1Title'), t(lang, 'step2Title'), t(lang, 'step3Title')];
+  const title = stepTitles[stepIndex];
   useEffect(() => {
     containerRef.current?.focus();
   }, []);
@@ -220,21 +164,20 @@ const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled 
         ))}
       </motion.div>
       <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" onClick={onBack} aria-label="Zurück zum vorherigen Schritt"><ArrowLeft className="mr-2 h-4 w-4" /> Zurück</Button>
-        <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient" aria-label="Weiter zum nächsten Schritt">Weiter</Button>
+        <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> {t(lang, 'back')}</Button>
+        <Button onClick={onNext} disabled={isNextDisabled} className="btn-gradient">{t(lang, 'next')}</Button>
       </div>
     </motion.div>
   );
 };
-/**
- * Displays the results of the security check based on the calculated scores.
- * Shows an overall assessment and a breakdown for each security area.
- */
 const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) => {
-  const overall = deriveOverallLabel(scores.average);
-  const areaALabel = deriveAreaLabel(scores.areaA);
-  const areaBLabel = deriveAreaLabel(scores.areaB);
-  const areaCLabel = deriveAreaLabel(scores.areaC);
+  const lang = useCurrentLang();
+  const overall = deriveOverallLabel(scores.average, lang);
+  const areaALabel = deriveAreaLabel(scores.areaA, lang);
+  const areaBLabel = deriveAreaLabel(scores.areaB, lang);
+  const areaCLabel = deriveAreaLabel(scores.areaC, lang);
+  const areaDetails = getAreaDetails(lang);
+  const resultTexts = getResultTexts(lang);
   return (
     <motion.div
       key="results"
@@ -253,33 +196,28 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
         <ResultCard icon={<Users />} title={areaDetails.areaC.title} label={areaCLabel} text={resultTexts[areaCLabel.level]} />
       </div>
       <Card className="shadow-soft">
-        <CardHeader><CardTitle>Wie wir dich unterstützen können</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t(lang, 'supportTitle')}</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-muted-foreground">
-          {/* Client Feedback: Updated intro per Three60 approach request, preserving bullets for Cloudflare/Ubiquiti/HXNWRK/von Busch. */}
-          <p>Durch unseren ganzheitlichen Three60 Ansatz erreichen wir eine 360-Grad-Betrachtung deiner gesamten IT-Umgebung. Zusammen bringen wir dein Unternehmen auf ein neues Sicherheits- und Performance-Level.</p>
+          <p>{t(lang, 'supportIntro')}</p>
           <ul className="list-disc list-inside space-y-2">
-            <li><strong className="text-foreground">Cloudflare Connectivity Cloud:</strong> Zero Trust, Schutz für Web-Anwendungen (WAF, DDoS), sichere Konnektivität.</li>
-            <li><strong className="text-foreground">Ubiquiti-Hardware:</strong> Moderne Netzwerk-Infrastruktur als solide Basis.</li>
-            <li><strong className="text-foreground">HXNWRK & von Busch:</strong> Planung, Implementierung und Betrieb moderner Architekturen.</li>
+            <li><strong className="text-foreground">{t(lang, 'supportLi1')}</strong></li>
+            <li><strong className="text-foreground">{t(lang, 'supportLi2')}</strong></li>
+            <li><strong className="text-foreground">{t(lang, 'supportLi3')}</strong></li>
           </ul>
-          <p>Auf Wunsch erhältst du eine individuelle Auswertung deines Checks und konkrete Handlungsempfehlungen – zugeschnitten auf deine Umgebung.</p>
+          <p>{t(lang, 'supportOutro')}</p>
         </CardContent>
       </Card>
       <div className="text-center pt-6">
-        <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext} aria-label="Individuelle Auswertung und Beratung anfordern">
-          Individuelle Auswertung & Beratung anfordern
+        <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext}>
+          {t(lang, 'supportCta')}
         </Button>
       </div>
       <Footer />
     </motion.div>
   );
 };
-/**
- * A card component for displaying the result of a single security area.
- */
 const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title: string, label: any, text: string }) => (
   <Card className="flex flex-col glass">
-    {/* Client Feedback: Prevented line wrapping on area titles (e.g., areaC) with nowrap/flex-shrink, adjusted sizing/padding for responsive polish without text changes. */}
     <CardHeader className="flex flex-row flex-nowrap items-center justify-between space-y-0 pb-4 px-6">
       <CardTitle className="text-sm md:text-base font-medium whitespace-nowrap truncate">{title}</CardTitle>
       <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="flex-shrink-0 ml-4">
@@ -296,37 +234,33 @@ const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title
     </CardContent>
   </Card>
 );
-/**
- * The final screen shown after the user successfully submits the lead form.
- * Provides confirmation and next steps.
- */
-const ThanksScreen = ({ onReset }: { onReset: () => void }) => (
-  <motion.div
-    key="thanks"
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.5 }}
-    className="text-center max-w-2xl mx-auto space-y-6 py-16"
-  >
-    <CheckCircle className="w-16 h-16 text-green-500 mx-auto shadow-soft rounded-full" />
-    <h2 className="text-4xl font-bold font-display">Vielen Dank – wir melden uns bei dir!</h2>
-    <p className="text-lg text-muted-foreground">
-      {/* Client feedback implemented: Updated text with Three60 branding. */}
-      Unsere Spezialisten der von Busch GmbH melden sich zeitnah bei dir, um dein Ergebnis im Detail zu besprechen und dir konkrete Optionen mit unserem ganzheitlichen Three60 Ansatz zu zeigen.
-    </p>
-    <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-      <Button asChild size="lg" variant="outline">
-        <a href="https://www.vonbusch.digital" target="_blank" rel="noopener noreferrer">Website von Busch besuchen</a>
-      </Button>
-      <Button size="lg" className="btn-gradient hover:shadow-primary" onClick={onReset}>Neuen Check starten</Button>
-    </div>
-    <div className="pt-4">
-      <Button asChild size="lg" variant="outline" className="transition-transform duration-200 hover:scale-105">
-        <a href="https://outlook.office.com/book/vonBuschGmbHCloudflare@vonbusch.digital/?ismsaljsauthenabled=true" target="_blank" rel="noopener noreferrer" aria-label="Termin buchen">
-          Direkt einen Termin buchen
-        </a>
-      </Button>
-    </div>
-    <Footer />
-  </motion.div>
-);
+const ThanksScreen = ({ onReset }: { onReset: () => void }) => {
+  const lang = useCurrentLang();
+  return (
+    <motion.div
+      key="thanks"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+      className="text-center max-w-2xl mx-auto space-y-6 py-16"
+    >
+      <CheckCircle className="w-16 h-16 text-green-500 mx-auto shadow-soft rounded-full" />
+      <h2 className="text-4xl font-bold font-display">{t(lang, 'thanksHeadline')}</h2>
+      <p className="text-lg text-muted-foreground">{t(lang, 'thanksText')}</p>
+      <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+        <Button asChild size="lg" variant="outline">
+          <a href="https://www.vonbusch.digital" target="_blank" rel="noopener noreferrer">{t(lang, 'visitWebsite')}</a>
+        </Button>
+        <Button size="lg" className="btn-gradient hover:shadow-primary" onClick={onReset}>{t(lang, 'startOver')}</Button>
+      </div>
+      <div className="pt-4">
+        <Button asChild size="lg" variant="outline" className="transition-transform duration-200 hover:scale-105">
+          <a href="https://outlook.office.com/book/vonBuschGmbHCloudflare@vonbusch.digital/?ismsaljsauthenabled=true" target="_blank" rel="noopener noreferrer">
+            {t(lang, 'bookAppointment')}
+          </a>
+        </Button>
+      </div>
+      <Footer />
+    </motion.div>
+  );
+};

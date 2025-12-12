@@ -22,13 +22,6 @@ export const useLangStore = create<LangState>()(
     }
   )
 );
-// HMR compatibility: clear persisted storage on module dispose
-if (import.meta.hot) {
-  import.meta.hot.dispose(() => {
-    useLangStore.persist?.clearStorage?.();
-  });
-}
-// Primitive selector hooks to prevent unnecessary re-renders and stabilize usage
+// Primitive selector hooks to prevent unnecessary re-renders
 export const useCurrentLang = () => useLangStore((state) => state.lang);
 export const useToggleLang = () => useLangStore((state) => state.toggleLang);
-export const useSetLang = () => useLangStore((state) => state.setLang);
