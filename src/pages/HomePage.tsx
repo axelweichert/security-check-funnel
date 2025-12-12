@@ -9,6 +9,7 @@ import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-re
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Footer } from '@/components/Footer';
+import { useShallow } from 'zustand/react/shallow';
 /**
  * Defines the possible steps in the security check funnel.
  * Each string corresponds to a specific view/screen in the user journey.
@@ -33,9 +34,12 @@ export function HomePage() {
   const [step, setStep] = useState<FunnelStep>('start');
   // Retrieves state and actions from the Zustand store for managing answers.
   // This ensures answers are persisted even if the user refreshes the page.
-  const answers = useFunnelStore(s => s.answers);
+  // FIX: Use primitive selectors and useShallow for objects to prevent re-render loops and invalid hook calls.
+  const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const resetFunnel = useFunnelStore(s => s.reset);
+  const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
+  const l1bAnswer = useFunnelStore(s => s.answers['L1-B']);
   // Computes scores based on the current answers.
   // `useMemo` ensures this calculation only runs when answers change.
   const scores = useMemo(() => {
@@ -43,9 +47,6 @@ export function HomePage() {
     const average = computeAverageScore(areaScores);
     return { ...areaScores, average };
   }, [answers]);
-  // Memoize answers for Level 1 to determine which questions to show in subsequent levels.
-  const l1aAnswer = answers['L1-A'];
-  const l1bAnswer = answers['L1-B'];
   // Dynamically determines the questions for Level 2 based on answers from Level 1.
   // This creates a conditional question flow.
   const level2Questions = useMemo(() => [
@@ -184,7 +185,8 @@ const listVariants = {
  * @param {boolean} isNextDisabled - Controls whether the 'Next' button is enabled.
  */
 const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
-  const answers = useFunnelStore(s => s.answers);
+  // FIX: Use shallow selector for answers object and primitive selector for the setter function.
+  const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const containerRef = useRef<HTMLDivElement>(null);
   // Focus the container on mount for better accessibility and keyboard navigation.

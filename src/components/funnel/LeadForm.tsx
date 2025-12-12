@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { AreaScores, deriveAreaLabel, deriveOverallLabel } from "@/lib/funnel";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Loader2, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Lead } from "@shared/types";
@@ -61,15 +61,18 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       consent: false,
     },
   });
+  // Stabilize scores object for useCallback dependency array
+  const stableScores = useMemo(() => JSON.stringify(scores), [scores]);
   const onSubmit = useCallback(async (values: LeadFormValues) => {
     setIsSubmitting(true);
+    const currentScores = JSON.parse(stableScores);
     const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
       ...values,
       scoreSummary: {
-        areaA: scores.areaA,
-        areaB: scores.areaB,
-        areaC: scores.areaC,
-        average: scores.average,
+        areaA: currentScores.areaA,
+        areaB: currentScores.areaB,
+        areaC: currentScores.areaC,
+        average: currentScores.average,
       },
     };
     try {
@@ -90,10 +93,10 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
         values.notes ? `- Notizen: ${values.notes}` : null,
         "",
         "Score-Zusammenfassung:",
-        `- VPN/Remote: ${scores.areaA}/6 (${deriveAreaLabel(scores.areaA).text})`,
-        `- Web/Online: ${scores.areaB}/6 (${deriveAreaLabel(scores.areaB).text})`,
-        `- Mitarbeiter-Sicherheit: ${scores.areaC}/6 (${deriveAreaLabel(scores.areaC).text})`,
-        `- Gesamt: ${scores.average.toFixed(1)}/6 (${deriveOverallLabel(scores.average).headline})`,
+        `- VPN/Remote: ${currentScores.areaA}/6 (${deriveAreaLabel(currentScores.areaA).text})`,
+        `- Web/Online: ${currentScores.areaB}/6 (${deriveAreaLabel(currentScores.areaB).text})`,
+        `- Mitarbeiter-Sicherheit: ${currentScores.areaC}/6 (${deriveAreaLabel(currentScores.areaC).text})`,
+        `- Gesamt: ${currentScores.average.toFixed(1)}/6 (${deriveOverallLabel(currentScores.average).headline})`,
       ].filter(line => line !== null).join("\n");
       const mailtoUrl = `mailto:security@vonbusch.digital?subject=${encodeURIComponent(`Security-Check Anfrage von ${values.company}`)}&body=${encodeURIComponent(formattedBody)}`;
       window.location.href = mailtoUrl;
@@ -105,7 +108,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [scores, form, onSuccess]);
+  }, [stableScores, form, onSuccess]);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
