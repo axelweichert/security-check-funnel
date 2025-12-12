@@ -5,6 +5,7 @@ import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
 import { LeadForm } from '@/components/funnel/LeadForm';
 import { useFunnelStore, questions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, areaDetails as originalAreaDetails, resultTexts, type Question } from '@/lib/funnel';
+import { useShallow } from 'zustand/react/shallow';
 import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -34,8 +35,7 @@ export function HomePage() {
   const [step, setStep] = useState<FunnelStep>('start');
   // Retrieves state and actions from the Zustand store for managing answers.
   // This ensures answers are persisted even if the user refreshes the page.
-  // FIX: Use primitive selectors and useShallow for objects to prevent re-render loops and invalid hook calls.
-  const answers = useFunnelStore(s => s.answers);
+  const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const resetFunnel = useFunnelStore(s => s.reset);
   const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
@@ -185,8 +185,8 @@ const listVariants = {
  * @param {boolean} isNextDisabled - Controls whether the 'Next' button is enabled.
  */
 const QuizStep = ({ stepIndex, title, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, title: string, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
-  // FIX: Use shallow selector for answers object and primitive selector for the setter function.
-  const answers = useFunnelStore(s => s.answers);
+  // Use shallow selector for answers object; setter remains a primitive selector.
+  const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const containerRef = useRef<HTMLDivElement>(null);
   // Focus the container on mount for better accessibility and keyboard navigation.
