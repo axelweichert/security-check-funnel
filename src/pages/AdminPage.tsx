@@ -19,7 +19,7 @@ import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
-const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#1a56db' };
+const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#3765EB' };
 const getMaturityLevel = (avgScore: number): 'high' | 'medium' | 'low' => {
   if (avgScore >= 4.5) return 'high';
   if (avgScore >= 2.5) return 'medium';

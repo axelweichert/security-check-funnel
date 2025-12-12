@@ -73,12 +73,12 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     let script = document.getElementById(scriptId);
     if (analyticsConsent) {
       if (!script) {
-        script = document.createElement('script') as HTMLScriptElement;
-        script.id = scriptId;
-        script.defer = true;
-        script.setAttribute('data-domain', 'vonbusch.digital');
-        script.src = 'https://plausible.io/js/script.js';
-        document.head.appendChild(script);
+        const newScript = document.createElement('script') as HTMLScriptElement;
+        newScript.id = scriptId;
+        newScript.defer = true;
+        newScript.setAttribute('data-domain', 'vonbusch.digital');
+        newScript.src = 'https://plausible.io/js/script.js';
+        document.head.appendChild(newScript);
       }
     } else {
       if (script) {
