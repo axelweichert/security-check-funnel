@@ -25,15 +25,16 @@ export function ProgressStepper({ currentStep, totalSteps, stepTitle }: Progress
         <div className="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2" style={{ width: `${(currentStep / (totalSteps - 1)) * 100}%`, transition: 'width 0.5s ease-out' }} />
         {steps.map((step) => (
           <div key={step.index} className="relative z-10 flex flex-col items-center">
-            <div
+            <motion.div
+              whileHover={{ scale: 1.1 }}
               className={cn(
-                "h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-500",
-                currentStep >= step.index ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                "h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300",
+                currentStep >= step.index ? "bg-primary text-primary-foreground shadow-primary" : "bg-muted text-muted-foreground"
               )}
             >
               {step.index + 1}
-            </div>
-            <span className={cn("text-xs mt-2", currentStep >= step.index ? "text-foreground font-semibold" : "text-muted-foreground")}>
+            </motion.div>
+            <span className={cn("text-xs mt-2 transition-colors duration-300", currentStep >= step.index ? "text-foreground font-semibold" : "text-muted-foreground")}>
               {step.title}
             </span>
           </div>

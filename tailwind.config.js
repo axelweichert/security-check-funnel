@@ -146,8 +146,8 @@ export default {
   		},
   		boxShadow: {
   			soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-  			glow: '0 0 20px -5px rgba(99, 102, 241, 0.4)',
-  			'glow-lg': '0 0 40px -10px rgba(99, 102, 241, 0.3)',
+  			glow: '0 0 20px -5px hsl(var(--primary) / 0.4)',
+  			'glow-lg': '0 0 40px -10px hsl(var(--primary) / 0.3)',
   			primary: '0 0 20px -5px hsl(var(--primary) / 0.4)',
   			glass: '0 8px 32px 0 rgba(31, 38, 135, 0.37)'
   		},
@@ -192,10 +192,10 @@ export default {
   			},
   			glow: {
   				'0%, 100%': {
-  					boxShadow: '0 0 20px -5px rgba(99, 102, 241, 0.4)'
+  					boxShadow: '0 0 20px -5px hsl(var(--primary) / 0.4)'
   				},
   				'50%': {
-  					boxShadow: '0 0 40px -5px rgba(99, 102, 241, 0.6)'
+  					boxShadow: '0 0 40px -5px hsl(var(--primary) / 0.6)'
   				}
   			},
   			float: {
@@ -234,9 +234,9 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
   		backgroundImage: {
-  			'gradient-rainbow': 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-  			'gradient-primary': 'linear-gradient(135deg, #E55A1B 0%, #D14615 50%, #4F46E5 100%)',
-  			'gradient-mesh': 'radial-gradient(at 40% 20%, hsla(28,100%,74%,1) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(189,100%,56%,1) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(355,100%,93%,1) 0px, transparent 50%), radial-gradient(at 80% 50%, hsla(340,100%,76%,1) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(22,100%,77%,1) 0px, transparent 50%), radial-gradient(at 80% 100%, hsla(242,100%,70%,1) 0px, transparent 50%), radial-gradient(at 0% 0%, hsla(343,100%,76%,1) 0px, transparent 50%)'
+  			'gradient-rainbow': 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-blue)) 50%, #764ba2 100%)',
+  			'gradient-primary': 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(219, 67%, 55%) 100%)',
+  			'gradient-mesh': 'radial-gradient(at 40% 20%, hsla(219, 67%, 62%, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(243, 77%, 57%, 0.2) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(219, 67%, 80%, 0.1) 0px, transparent 50%), radial-gradient(at 80% 50%, hsla(243, 77%, 70%, 0.2) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(219, 67%, 77%, 0.2) 0px, transparent 50%), radial-gradient(at 80% 100%, hsla(243, 77%, 60%, 0.25) 0px, transparent 50%), radial-gradient(at 0% 0%, hsla(219, 67%, 76%, 0.2) 0px, transparent 50%)'
   		}
   	}
   },

@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
-const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#22c55e' };
+const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#4264E3' };
 /**
  * Determines the maturity level based on the average score.
  * @param avgScore The average score from the lead's funnel results.
@@ -203,7 +203,7 @@ export function AdminPage() {
                     <TableBody>
                       {filteredLeads.length > 0 ? (
                         filteredLeads.map(lead => (
-                          <TableRow key={lead.id}>
+                          <TableRow key={lead.id} className="hover:bg-accent transition-colors">
                             <TableCell className="font-medium">{lead.company}</TableCell>
                             <TableCell>
                               <div className="flex flex-col">

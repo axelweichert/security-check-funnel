@@ -6,12 +6,12 @@
     /* Core Colors */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
-    --primary: 22 84% 58%; /* Updated: #E55A1B */
+    --primary: 219 67% 62%; /* Updated: #4264E3 */
     --primary-foreground: 0 0% 100%;
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
     --border: 0 0% 89.8%;
-    --ring: 22 84% 58%;
+    --ring: 219 67% 62%; /* Updated: #4264E3 */
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
@@ -20,7 +20,7 @@
     --secondary-foreground: 0 0% 9%;
     --accent: 0 0% 96.1%;
     --accent-foreground: 0 0% 9%;
-    --accent-blue: 243 77% 57%; /* New: #4F46E5 */
+    --accent-blue: 243 77% 57%; /* #4F46E5 */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --input: 0 0% 89.8%;
@@ -42,12 +42,12 @@
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
-    --primary: 22 84% 58%;
+    --primary: 219 67% 62%; /* Updated: #4264E3 */
     --primary-foreground: 0 0% 100%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
     --border: 0 0% 14.9%;
-    --ring: 22 84% 58%;
+    --ring: 219 67% 62%; /* Updated: #4264E3 */
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 3.9%;
@@ -93,19 +93,19 @@
     @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-gradient {
-    @apply btn text-white shadow-primary hover:shadow-glow hover:scale-105 active:scale-95;
-    background: linear-gradient(135deg, #E55A1B 0%, #D14615 100%);
+    @apply btn text-primary-foreground shadow-primary hover:shadow-glow hover:scale-105 active:scale-95;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(219 67% 55%) 100%);
   }
   /* Gradient System */
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #E55A1B 0%, #D14615 50%, #4F46E5 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(219, 67%, 55%) 100%);
   }
   .bg-gradient-rainbow {
-    background: linear-gradient(135deg, #F38020 0%, #E55A1B 25%, #D14615 50%, #ff6b35 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-blue)) 50%, #764ba2 100%);
   }
   /* Text System */
   .text-gradient {
-    background: linear-gradient(90deg, #E55A1B 0%, #D14615 50%, #4F46E5 100%);
+    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--accent-blue)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
