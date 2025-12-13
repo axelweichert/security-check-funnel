@@ -20,11 +20,13 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <HomePage />,
+    loader: () => null,
     errorElement: <RouteErrorBoundary />,
   },
   {
     path: "/admin",
     element: <AdminPage />,
+    loader: () => null,
     errorElement: <RouteErrorBoundary />,
   },
 ]);
