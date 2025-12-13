@@ -24,10 +24,10 @@ A stylish 3-step Security Check funnel (in German and English) with scoring, res
 4. Open http://localhost:3000 (or configured port).
 5. For production deployment, see the Deployment section.
 ## Installation
-This project uses npm as the recommended package manager for compatibility with CI/CD environments like Cloudflare Pages.
+This project uses npm as the recommended package manager for compatibility with CI/CD environments like Cloudflare Pages and development environments like GitHub Codespaces.
 1. Ensure Node.js and npm are installed.
 2. Clone the repo: `git clone <repository-url> && cd vonbusch-security-funnel`.
-3. Install dependencies: `npm install`.
+3. Install dependencies: `npm install`. This will also generate a `package-lock.json` file which you should commit to your repository.
 4. Generate Cloudflare types (if needed): `npm run cf-typegen`.
 No additional configuration is required for local development. The project is pre-configured with Cloudflare Workers integration.
 ## Development
@@ -73,17 +73,13 @@ Deploy to Cloudflare Workers for global edge performance with Durable Objects fo
 The frontend assets are served via Cloudflare's SPA handling, with API routes proxied to the Worker.
 [cloudflarebutton]
 ### Deployment to Cloudflare Pages (Production Workflow)
-This project is optimized for deployment on Cloudflare Pages. The previous `bun.lockb` file caused deployment issues and has been removed in favor of `package-lock.json`.
+This project is optimized for deployment on Cloudflare Pages.
 **To ensure successful deployments, follow these steps:**
-1. **Delete `bun.lockb`**: If you have a local copy, remove it: `rm bun.lockb`.
-2. **Generate `package-lock.json`**: Run `npm install` to generate the lockfile.
-3. **Commit the Lockfile**: Add and commit `package-lock.json` to your repository. **Do not** commit `bun.lockb`.
-Cloudflare Pages will automatically detect `package-lock.json` and use `npm` for the build, resolving any lockfile conflicts.
+1. **Use npm**: Run `npm install` locally. This will generate a `package-lock.json` file.
+2. **Commit the Lockfile**: Add and commit `package-lock.json` to your repository.
+Cloudflare Pages will automatically detect `package-lock.json` and use `npm` for the build, ensuring a consistent and reliable deployment process.
+**GitHub Codespaces**: To run this project in a Codespace, simply run `npm install` followed by `npm run dev`.
 **Custom Domain**: After deployment, add a custom domain in the Cloudflare dashboard. Ensure `wrangler.jsonc` assets config handles SPA routing.
-**Phased Rollout**:
-- Phase 1: Core funnel (current implementation).
-- Phase 2: Add CRM integration and analytics.
-- Phase 3: SEO and multi-language support.
 ## Contributing
 1. Fork the repository.
 2. Create a feature branch: `git checkout -b feature/amazing-feature`.
