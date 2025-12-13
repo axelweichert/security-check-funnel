@@ -87,6 +87,10 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       if (values.analyticsConsent) {
         localStorage.setItem('analyticsConsent', 'true');
         window.dispatchEvent(new CustomEvent('analyticsConsentChanged'));
+        // Dispatch event for Plausible goal tracking
+        window.dispatchEvent(new CustomEvent('leadSubmit', {
+          detail: { lang, ...currentScores, employees: values.employeesRange }
+        }));
       }
       toast.success("Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.");
       const areaALabel = deriveAreaLabel(currentScores.areaA, lang);

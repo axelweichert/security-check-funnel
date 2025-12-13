@@ -4,14 +4,16 @@ import { Button } from '@/components/ui/button';
 import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
 import { LeadForm } from '@/components/funnel/LeadForm';
-import { useFunnelStore, getQuestions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, getAreaDetails, getResultTexts, type Question } from '@/lib/funnel';
+import { useFunnelStore, getQuestions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, getAreaDetails, getResultTexts, type Question, type AnswersState } from '@/lib/funnel';
 import { useShallow } from 'zustand/react/shallow';
-import { ArrowLeft, BarChart, CheckCircle, Shield, Users, Wifi } from 'lucide-react';
+import { ArrowLeft, BarChart, CheckCircle, Download, Shield, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Footer } from '@/components/Footer';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
+import { useABVariant } from '@/stores/useABStore';
+import { generateReport, downloadReport } from '@/lib/reportGenerator';
 type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
 export function HomePage() {
   const lang = useCurrentLang();
@@ -21,7 +23,17 @@ export function HomePage() {
   const resetFunnel = useFunnelStore(s => s.reset);
   const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
   const l1bAnswer = useFunnelStore(s => s.answers['L1-B']);
-  const questions = useMemo(() => getQuestions(lang), [lang]);
+  const abVariant = useABVariant();
+
+  const questions = useMemo(() => {
+    const q = getQuestions(lang);
+    // Example A/B test: Change a question text for variant B
+    if (abVariant === 'B') {
+      q['L1-A'].text = t(lang, 'L1-A-text-B');
+    }
+    return q;
+  }, [lang, abVariant]);
+
   const scores = useMemo(() => {
     const areaScores = computeAreaScores(answers, lang);
     const average = computeAverageScore(areaScores);
@@ -66,6 +78,7 @@ export function HomePage() {
 }
 const StartScreen = ({ onStart }: { onStart: () => void }) => {
   const lang = useCurrentLang();
+  const abVariant = useABVariant();
   return (
     <motion.div
       key="start"
@@ -79,7 +92,7 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => {
     >
       <div className="space-y-4 max-w-4xl">
         <h1 id="main-heading" className="text-5xl md:text-6xl font-bold font-display text-foreground leading-tight">
-          {t(lang, 'startHeadline')}
+          {abVariant === 'B' ? t(lang, 'startHeadlineB') : t(lang, 'startHeadline')}
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground text-balance">
           {t(lang, 'startSubline')}
@@ -102,7 +115,7 @@ const StartScreen = ({ onStart }: { onStart: () => void }) => {
         </Button>
       </motion.div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl w-full pt-8">
-          <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title={t(lang, 'startBenefit1Title')} text={t(lang, 'startBenefit1')} />
+          <InfoCard icon={<CheckCircle className="w-8 h-8 text-primary" />} title={t(lang, 'startBenefit1Title')} text={abVariant === 'B' ? t(lang, 'startBenefit1B') : t(lang, 'startBenefit1')} />
           <InfoCard icon={<BarChart className="w-8 h-8 text-primary" />} title={t(lang, 'startBenefit2Title')} text={t(lang, 'startBenefit2')} />
           <InfoCard icon={<Shield className="w-8 h-8 text-primary" />} title={t(lang, 'startBenefit3Title')} text={t(lang, 'startBenefit3')} />
       </div>
@@ -178,6 +191,10 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
   const areaCLabel = deriveAreaLabel(scores.areaC, lang);
   const areaDetails = getAreaDetails(lang);
   const resultTexts = getResultTexts(lang);
+  const handleDownload = () => {
+    const reportHtml = generateReport({ scores, lang });
+    downloadReport(reportHtml, `Security-Report-${new Date().toISOString().split('T')[0]}.html`);
+  };
   return (
     <motion.div
       key="results"
@@ -208,9 +225,16 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
         </CardContent>
       </Card>
       <div className="text-center pt-6">
-        <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext}>
-          {t(lang, 'supportCta')}
-        </Button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext}>
+            {t(lang, 'supportCta')}
+          </Button>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button size="lg" variant="outline" onClick={handleDownload} aria-label={t(lang, 'downloadReport')}>
+              <Download className="mr-2 h-5 w-5" /> {t(lang, 'downloadReport')}
+            </Button>
+          </motion.div>
+        </div>
       </div>
       <Footer />
     </motion.div>

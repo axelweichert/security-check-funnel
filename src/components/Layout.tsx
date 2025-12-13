@@ -9,6 +9,12 @@ interface LayoutProps {
   title?: string;
   description?: string;
 }
+
+declare global {
+  interface Window {
+    plausible?: (event: string, options?: { props: Record<string, any> }) => void;
+  }
+}
 const defaultTitle = 'Security-Check in 3 Minuten by vonBusch';
 const defaultDescription = 'Stilvoller 3‑Schritt Security-Check (DE) mit Scoring, Ergebnis-Auswertung und Lead-Formular zur Beratungseinleitung.';
 const ogImageUrl = 'https://www.vonbusch.digital/images/og-image.png'; // Placeholder OG image URL
@@ -23,8 +29,17 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     checkConsent();
     // Listen for changes from the lead form
     window.addEventListener('analyticsConsentChanged', checkConsent);
+    const handleLeadSubmit = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (window.plausible) {
+        window.plausible('lead_submit', { props: customEvent.detail });
+      }
+    };
+    window.addEventListener('leadSubmit', handleLeadSubmit);
+
     return () => {
       window.removeEventListener('analyticsConsentChanged', checkConsent);
+      window.removeEventListener('leadSubmit', handleLeadSubmit);
     };
   }, []);
   useEffect(() => {
@@ -76,7 +91,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
         const newScript = document.createElement('script') as HTMLScriptElement;
         newScript.id = scriptId;
         newScript.defer = true;
-        newScript.setAttribute('data-domain', 'vonbusch.digital');
+        newScript.setAttribute('data-domain', 'check.vonbusch.digital');
         newScript.src = 'https://plausible.io/js/script.js';
         document.head.appendChild(newScript);
       }

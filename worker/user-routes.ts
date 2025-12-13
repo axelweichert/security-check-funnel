@@ -67,7 +67,18 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     const createdLead = await LeadEntity.create(c.env, newLead);
     // Mock webhook/email simulation for Phase 2
-    console.log(`[MOCK WEBHOOK] New lead received: ${createdLead.id} for ${createdLead.company}. Sending notification.`);
+    const webhookUrl = 'https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c'; // Replace with actual CRM webhook URL
+    
+    c.executionCtx.waitUntil(
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createdLead),
+      })
+      .then(() => console.log(`[CRM WEBHOOK] Lead ${createdLead.id} forwarded successfully.`))
+      .catch(e => console.error('[CRM WEBHOOK ERROR]', e))
+    );
+
     return ok(c, createdLead);
   });
   app.get('/api/leads', async (c) => {

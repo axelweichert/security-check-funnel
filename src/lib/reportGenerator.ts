@@ -1,21 +1,19 @@
-
-type Html2CanvasFn = (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>;
-import { toast } from 'sonner';
 import {
   type AreaScores,
+  type Language,
   deriveAreaLabel,
   deriveOverallLabel,
   getAreaDetails,
   getResultTexts,
 } from './funnel';
-import { t, type Language } from './i18n';
+import { t } from './i18n';
 import type { Lead } from '@shared/types';
 interface ReportData {
   scores: AreaScores & { average: number };
   lang: Language;
   lead?: Partial<Lead>;
 }
-function generateReportHTML({ scores, lang, lead }: ReportData): string {
+export function generateReport({ scores, lang, lead }: ReportData): string {
   const overall = deriveOverallLabel(scores.average, lang);
   const areaALabel = deriveAreaLabel(scores.areaA, lang);
   const areaBLabel = deriveAreaLabel(scores.areaB, lang);
@@ -29,24 +27,26 @@ function generateReportHTML({ scores, lang, lead }: ReportData): string {
   const styles = `
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-      body { font-family: 'Inter', sans-serif !important; margin: 0; padding: 0; background-color: #ffffff; color: #0f172a; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-      .page { width: 210mm; min-height: 297mm; padding: 15mm; box-sizing: border-box; max-width: 100%; margin: 0; background-color: white; }
+      body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #ffffff; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; background-color: white; box-sizing: border-box; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px; }
-      .logo-title { font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; }
+      .logo { height: 40px; }
       .header-info { text-align: right; font-size: 12px; color: #6b7280; }
       .main-title { font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 32px; margin-bottom: 8px; }
-      .summary { font-size: 16px; color: #475569; margin-bottom: 32px; text-wrap: balance; }
-      .results-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
-      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background-color: #f8fafc; flex: 1 1 calc(33.333% - 16px); min-width: 0; display: flex; flex-direction: column; font-size: 14px; line-height: 1.4; word-break: normal; hyphens: auto; text-wrap: balance; }
-      .card-title { font-size: 14px; font-weight: 600; margin: 0 0 12px 0; }
-      .ampel { display: inline-flex; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+      .summary { font-size: 16px; color: #475569; margin-bottom: 32px; }
+      .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background-color: #f8fafc; }
+      .card-title { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; }
+      .ampel { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
       .card-text { font-size: 14px; color: #475569; margin-top: 12px; }
-      .support-section { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px; max-width: 95%; }
-      ul { padding-left: 0; list-style-position: outside; }
-      li { margin-bottom: 0.5em; padding-left: 1.5em; text-indent: -1.5em; }
+      .support-section { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px; }
+      .support-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+      ul { padding-left: 20px; }
+      li { margin-bottom: 8px; }
       .footer { margin-top: 48px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px; }
       .lead-info { background-color: #f1f5f9; padding: 16px; border-radius: 8px; margin-top: 24px; font-size: 14px; }
       .lead-info p { margin: 0 0 8px 0; }
+      /* Ampel Colors */
       .bg-red { background-color: #fee2e2; color: #991b1b; }
       .bg-yellow { background-color: #fef3c7; color: #92400e; }
       .bg-green { background-color: #dcfce7; color: #166534; }
@@ -63,19 +63,19 @@ function generateReportHTML({ scores, lang, lead }: ReportData): string {
     <body>
       <div class="page">
         <header class="header">
-          <h2 class="logo-title">von Busch GmbH</h2>
+          <img src="https://www.vonbusch.digital/img/logo_dark.svg" alt="von Busch GmbH Logo" class="logo" />
           <div class="header-info">
             <strong>von Busch GmbH</strong><br>
-            Alfred-Bozi-Stra\u00DFe 12<br>
+            Alfred-Bozi-Straße 12<br>
             33602 Bielefeld
           </div>
         </header>
         <main>
           <h1 class="main-title">${overall.headline}</h1>
           <p class="summary">${overall.summary}</p>
-          ${lead && lead.company ? `
+          ${lead ? `
             <div class="lead-info">
-              <p><strong>${t(lang, 'company')}:</strong> ${lead.company}</p>
+              <p><strong>${t(lang, 'company')}:</strong> ${lead.company || ''}</p>
               <p><strong>${t(lang, 'contact')}:</strong> ${lead.contact || ''}</p>
               <p><strong>${t(lang, 'tableDate')}:</strong> ${formatDate(lead.createdAt)}</p>
             </div>
@@ -116,41 +116,13 @@ function generateReportHTML({ scores, lang, lead }: ReportData): string {
     </html>
   `;
 }
-export async function downloadReport(data: ReportData) {
-  const toastId = toast.loading('Generating PDF report...');
-  try {
-    const reportHtml = generateReportHTML(data);
-    const reportElement = document.createElement('div');
-    reportElement.style.position = 'absolute';
-    reportElement.style.left = '-210mm'; // Position off-screen
-    reportElement.style.top = '0';
-    reportElement.innerHTML = reportHtml;
-    document.body.appendChild(reportElement);
-    // Dynamically import browser‑only libraries
-    const jsPDFModule = await import('jspdf');
-    const jsPDF = jsPDFModule.default;
-    const html2canvasModule = await import('html2canvas');
-    const html2canvasFn = html2canvasModule.default as Html2CanvasFn;
-
-    const canvas = await html2canvasFn(
-      reportElement.querySelector('.page') as HTMLElement,
-      {
-        scale: 1,
-        useCORS: false,
-        logging: false,
-      }
-    );
-    document.body.removeChild(reportElement);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = 210;
-    const pdfHeight = 297;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-    const filename = `Security-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
-    pdf.save(filename);
-    toast.success('Report downloaded successfully!', { id: toastId });
-  } catch (error) {
-    console.error('Failed to generate PDF:', error);
-    toast.error('Failed to generate PDF report. Please try again.', { id: toastId });
-  }
+export function downloadReport(htmlContent: string, filename = 'Security-Report.html') {
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 }

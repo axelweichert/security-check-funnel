@@ -3,11 +3,11 @@ export type TranslationKey =
   // General
   | 'back' | 'next' | 'submit' | 'startOver'
   // Start Screen
-  | 'startHeadline' | 'startSubline' | 'startBenefit1' | 'startBenefit2' | 'startBenefit3' | 'startDuration' | 'startCta' | 'startTrust' | 'startTrustPartner'
+  | 'startHeadline' | 'startHeadlineB' | 'startSubline' | 'startBenefit1' | 'startBenefit1B' | 'startBenefit2' | 'startBenefit3' | 'startDuration' | 'startCta' | 'startTrust' | 'startTrustPartner'
   // Progress Stepper
   | 'step1Title' | 'step2Title' | 'step3Title'
   // Questions & Options (Keys are structured as ID-text or ID-subtext)
-  | 'L1-A-text' | 'L1-A-1' | 'L1-A-2' | 'L1-A-3' | 'L1-A-4'
+  | 'L1-A-text' | 'L1-A-text-B' | 'L1-A-1' | 'L1-A-2' | 'L1-A-3' | 'L1-A-4'
   | 'L1-B-text' | 'L1-B-subtext' | 'L1-B-1' | 'L1-B-2' | 'L1-B-3' | 'L1-B-4'
   | 'L1-C-text' | 'L1-C-1' | 'L1-C-2' | 'L1-C-3' | 'L1-C-4'
   | 'L2-A1-text' | 'L2-A1-1' | 'L2-A1-2' | 'L2-A1-3' | 'L2-A1-4'
@@ -26,7 +26,7 @@ export type TranslationKey =
   | 'areaA' | 'areaB' | 'areaC'
   | 'maturityHigh' | 'maturityMedium' | 'maturityLow'
   | 'resultTextHigh' | 'resultTextMedium' | 'resultTextLow'
-  | 'supportTitle' | 'supportText' | 'supportLi1' | 'supportLi2' | 'supportLi3' | 'supportOutro' | 'supportCta'
+  | 'supportTitle' | 'supportText' | 'supportLi1' | 'supportLi2' | 'supportLi3' | 'supportOutro' | 'supportCta' | 'downloadReport'
   // Lead Form
   | 'formHeadline' | 'formSubline' | 'company' | 'companyPlaceholder' | 'contact' | 'contactPlaceholder'
   | 'employees' | 'employeesPlaceholder' | 'email' | 'emailPlaceholder' | 'phone' | 'phonePlaceholder'
@@ -48,11 +48,13 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     submit: 'Absenden',
     startOver: 'Neuen Check starten',
     startHeadline: 'Wie widerstandsfähig ist dein Unternehmen gegen Cyberangriffe?',
+    startHeadlineB: 'Ist Ihre IT-Sicherheit bereit für die Bedrohungen von morgen?',
     startSubline: 'Kurzer 3-Stufen-Check zu VPN, Web-Anwendungen und Mitarbeiter-Sicherheit – mit konkreten Handlungsempfehlungen.',
     startHook: 'Deutschland ist das drittmeist angegriffene Land der Welt im Cyberspace.',
     startHookCta: 'Cloudflare DDoS Threat Report Q3-2025 entdecken',
     startBenefit1Title: 'Klare Einschätzung',
     startBenefit1: 'Erhalte eine klare Einschätzung deines Security-Reifegrads.',
+    startBenefit1B: 'Verstehen Sie Ihre aktuelle Sicherheitslage in nur 3 Minuten.',
     startBenefit2Title: 'Moderne Best Practices',
     startBenefit2: 'Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst.',
     startBenefit3Title: 'Konkrete Unterstützung',
@@ -65,6 +67,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     step2Title: 'Details zu deiner Umgebung',
     step3Title: 'Einschätzung deiner Reifegrade',
     'L1-A-text': '1. Setzt du heute bereits eine VPN- oder Remote-Access-Lösung für Mitarbeitende ein?',
+    'L1-A-text-B': '1. Wie ermöglichen Sie Ihren Mitarbeitern den Fernzugriff auf Unternehmensressourcen?',
     'L1-A-1': 'Ja, für einen Großteil unserer Remote-Nutzer',
     'L1-A-2': 'Ja, aber nur für wenige ausgewählte Mitarbeitende',
     'L1-A-3': 'Nein, wir haben aktuell keine VPN/Remote-Access-Lösung im Einsatz',
@@ -147,6 +150,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     supportLi3: 'HXNWRK & von Busch: Planung, Implementierung und Betrieb moderner Architekturen.',
     supportOutro: 'Auf Wunsch erhältst du eine individuelle Auswertung deines Checks und konkrete Handlungsempfehlungen – zugeschnitten auf deine Umgebung.',
     supportCta: 'Individuelle Auswertung & Beratung anfordern',
+    downloadReport: 'PDF-Report herunterladen',
     formHeadline: 'Dein Ergebnis als Grundlage für konkrete Maßnahmen',
     formSubline: 'Trage deine Kontaktdaten ein – wir melden uns mit einer individuellen Einschätzung und konkreten Vorschlägen für dein Unternehmen.',
     company: 'Firmenname',
@@ -205,11 +209,13 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     submit: 'Submit',
     startOver: 'Start New Check',
     startHeadline: 'How resilient is your business against cyberattacks?',
+    startHeadlineB: 'Is your IT security ready for tomorrow\'s threats?',
     startSubline: 'A quick 3-step check on VPN, web applications, and employee security—with concrete recommendations for action.',
     startHook: 'Germany is the third most attacked country in cyberspace worldwide.',
     startHookCta: 'Discover the Cloudflare DDoS Threat Report Q3-2025',
     startBenefit1Title: 'Clear Assessment',
     startBenefit1: 'Get a clear assessment of your security maturity level.',
+    startBenefit1B: 'Understand your current security posture in just 3 minutes.',
     startBenefit2Title: 'Modern Best Practices',
     startBenefit2: 'See where you stand compared to Zero Trust, DDoS protection & awareness.',
     startBenefit3Title: 'Concrete Support',
@@ -222,6 +228,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     step2Title: 'Details about your environment',
     step3Title: 'Assessment of your maturity levels',
     'L1-A-text': '1. Do you currently use a VPN or remote access solution for employees?',
+    'L1-A-text-B': '1. How do you enable remote access to company resources for your employees?',
     'L1-A-1': 'Yes, for the majority of our remote users',
     'L1-A-2': 'Yes, but only for a few selected employees',
     'L1-A-3': 'No, we do not currently have a VPN/remote access solution in place',
@@ -304,6 +311,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     supportLi3: 'HXNWRK & von Busch: Planning, implementation, and operation of modern architectures.',
     supportOutro: 'Upon request, you will receive an individual evaluation of your check and concrete recommendations for action—tailored to your environment.',
     supportCta: 'Request individual evaluation & consultation',
+    downloadReport: 'Download PDF Report',
     formHeadline: 'Your result as a basis for concrete measures',
     formSubline: 'Enter your contact details—we will get in touch with an individual assessment and concrete proposals for your company.',
     company: 'Company Name',
