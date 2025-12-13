@@ -22,8 +22,8 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   const lang = useCurrentLang();
   const [analyticsConsent, setAnalyticsConsent] = useState(false);
   useEffect(() => {
-    // PWA Service Worker Registration
-    if ('serviceWorker' in navigator) {
+    // PWA Service Worker Registration (disabled in dev mode)
+    if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
           console.log('SW registered: ', registration);

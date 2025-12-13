@@ -83,8 +83,12 @@ export function AdminPage() {
     }
   }, []);
   const fetchLeads = useCallback(async ({ pageParam }: { pageParam?: unknown }) => {
-    const cursor = pageParam ? String(pageParam) : null;
-    return api<{ items: Lead[]; next: string | null }>(`/api/leads?limit=10&cursor=${cursor ?? ''}`);
+    // Use URLSearchParams to avoid sending an empty `cursor` on the first request
+    const params = new URLSearchParams({ limit: '10' });
+    if (pageParam) {
+      params.set('cursor', String(pageParam));
+    }
+    return api<{ items: Lead[]; next: string | null }>(`/api/leads?${params.toString()}`);
   }, []);
   const {
     data,

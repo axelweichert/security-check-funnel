@@ -107,7 +107,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
 
       const webhookUrl = 'https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c'; // Replace with actual CRM webhook URL
 
-      // Fire‑and‑forget webhook request
+       // Fire-and-forget webhook request
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -126,9 +126,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
 
   app.get('/api/leads', async (c) => {
     await LeadEntity.ensureSeed(c.env); // Ensures index exists, no-op if data present
-    const cursor = c.req.query('cursor');
+    const cursorParam = c.req.query('cursor') || null;
     const limit = c.req.query('limit') ? Math.max(1, (Number(c.req.query('limit')) | 0)) : 25;
-    const page = await LeadEntity.list(c.env, cursor ?? null, limit);
+    const page = await LeadEntity.list(c.env, cursorParam, limit);
     return ok(c, page);
   });
 
