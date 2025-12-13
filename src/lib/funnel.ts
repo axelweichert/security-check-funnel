@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { t, type Language } from './i18n';
 // --- TYPES ---
 export type AnswerId = string;
@@ -27,22 +26,14 @@ const initialAnswers: AnswersState = {
   'L2-A1': '', 'L2-A2': '', 'L2-B1': '', 'L2-B2': '', 'L2-C1': '',
   'L3-A1': '', 'L3-A1-ALT': '', 'L3-B1': '', 'L3-C1': '',
 };
-export const useFunnelStore = create<FunnelState>()(
-  persist(
-    (set) => ({
-      answers: initialAnswers,
-      setAnswer: (questionId, answerId) =>
-        set((state) => ({
-          answers: { ...state.answers, [questionId]: answerId },
-        })),
-      reset: () => set({ answers: initialAnswers }),
-    }),
-    {
-      name: 'vonbusch-funnel-storage',
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
-);
+export const useFunnelStore = create<FunnelState>()((set) => ({
+  answers: initialAnswers,
+  setAnswer: (questionId, answerId) =>
+    set((state) => ({
+      answers: { ...state.answers, [questionId]: answerId },
+    })),
+  reset: () => set({ answers: initialAnswers }),
+}));
 // --- QUESTIONS DATA ---
 export function getQuestions(lang: Language): Record<QuestionId, Question> {
   return {
