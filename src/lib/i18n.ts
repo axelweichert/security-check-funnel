@@ -31,14 +31,14 @@ export type TranslationKey =
   | 'formHeadline' | 'formSubline' | 'company' | 'companyPlaceholder' | 'contact' | 'contactPlaceholder'
   | 'employees' | 'employeesPlaceholder' | 'email' | 'emailPlaceholder' | 'phone' | 'phonePlaceholder'
   | 'role' | 'rolePlaceholder' | 'notes' | 'notesPlaceholder' | 'consent' | 'consentText' | 'submitAndConsult'
-  | 'analyticsConsent' | 'analyticsConsentText'
+  | 'analyticsConsent' | 'analyticsConsentText' | 'discountInfo' | 'secureDiscount' | 'secureDiscountText'
   // Thanks Screen
   | 'thanksHeadline' | 'thanksText' | 'visitWebsite' | 'bookAppointment'
   // Admin Page
   | 'adminTitle' | 'adminSubtitle' | 'leadsTitle' | 'searchPlaceholder' | 'tableCompany' | 'tableContact'
   | 'tableDate' | 'tableEmployees' | 'tableRole' | 'tableNotes' | 'tableRisk' | 'riskHigh' | 'riskMedium' | 'riskLow'
   | 'noLeads' | 'loadMore' | 'loading' | 'chartTitle' | 'chartNoData' | 'loginTitle' | 'loginUser' | 'loginPass'
-  | 'loginButton' | 'loginError' | 'backToHome' | 'logout'
+  | 'loginButton' | 'loginError' | 'backToHome' | 'logout' | 'exportCsv' | 'fromDate' | 'toDate'
   | 'startHook' | 'startHookCta' | 'startBenefit1Title' | 'startBenefit2Title' | 'startBenefit3Title'
   | 'supportIntro';
 const translations: Record<Language, Record<TranslationKey, string>> = {
@@ -58,7 +58,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     startBenefit2Title: 'Moderne Best Practices',
     startBenefit2: 'Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst.',
     startBenefit3Title: 'Konkrete Unterst\u00FCtzung',
-    startBenefit3: 'Erfahre wie wir dich mit unserem ganzheitlichen Three60 Ansatz konkret unterst\u00FCtzen k��nnen.',
+    startBenefit3: 'Erfahre wie wir dich mit unserem ganzheitlichen Three60 Ansatz konkret unterst\u00FCtzen k����nnen.',
     startDuration: 'Dauer: ca. 2–3 Minuten',
     startCta: 'Jetzt Security-Check starten',
     startTrust: 'von Busch GmbH – IT-Solutions & Security',
@@ -171,6 +171,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     consentText: 'Ich bin einverstanden, dass die von Busch GmbH und HXNWRK meine Angaben zur Kontaktaufnahme und zur individuellen Beratung zu IT-Security- und Cloud-Lösungen nutzen.',
     analyticsConsent: 'Anonymes Tracking',
     analyticsConsentText: 'Ich erlaube anonymes Tracking zur Verbesserung der Nutzererfahrung (Cookie-frei & DSGVO-konform).',
+    discountInfo: 'Sichere dir 500€ Preisnachlass auf deine erste Cloudflare Zero Trust Implementierung!',
+    secureDiscount: 'Ja, Rabatt sichern',
+    secureDiscountText: '(optional, sichert dir den Rabatt bei Beratung)',
     submitAndConsult: 'Ergebnis absenden & Beratung anfordern',
     thanksHeadline: 'Vielen Dank – wir melden uns bei dir!',
     thanksText: 'Unsere Spezialisten der von Busch GmbH melden sich zeitnah bei dir, um dein Ergebnis im Detail zu besprechen und dir konkrete Optionen mit unserem ganzheitlichen Three60 Ansatz zu zeigen.',
@@ -202,6 +205,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     loginError: 'Falscher Benutzername oder Passwort.',
     backToHome: 'Zur\u00FCck zur Startseite',
     logout: 'Abmelden',
+    exportCsv: 'CSV Exportieren',
+    fromDate: 'Von Datum',
+    toDate: 'Bis Datum',
   },
   en: {
     back: 'Back',
@@ -332,6 +338,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     consentText: 'I agree that von Busch GmbH and HXNWRK may use my information to contact me and for individual consultation on IT security and cloud solutions.',
     analyticsConsent: 'Anonymous Tracking',
     analyticsConsentText: 'I allow anonymous tracking to improve the user experience (cookie-free & GDPR compliant).',
+    discountInfo: 'Secure a €500 discount on your first Cloudflare Zero Trust implementation!',
+    secureDiscount: 'Yes, secure discount',
+    secureDiscountText: '(optional, secures your discount for the consultation)',
     submitAndConsult: 'Submit Results & Request Consultation',
     thanksHeadline: 'Thank you—we will be in touch!',
     thanksText: 'Our specialists from von Busch GmbH will contact you shortly to discuss your results in detail and show you concrete options with our holistic Three60 approach.',
@@ -363,6 +372,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     loginError: 'Incorrect username or password.',
     backToHome: 'Back to Home',
     logout: 'Logout',
+    exportCsv: 'Export CSV',
+    fromDate: 'From Date',
+    toDate: 'To Date',
   },
 };
 export function t(lang: Language, key: TranslationKey): string {

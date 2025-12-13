@@ -21,10 +21,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { AreaScores, deriveAreaLabel } from "@/lib/funnel";
+import { AreaScores } from "@/lib/funnel";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { Loader2, Heart, Download, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Lead } from "@shared/types";
@@ -33,7 +33,6 @@ import { useCurrentLang } from "@/stores/useLangStore";
 import { t } from "@/lib/i18n";
 import { downloadReport } from "@/lib/reportGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 const formSchema = z.object({
   company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
   contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
@@ -46,6 +45,7 @@ const formSchema = z.object({
     message: "Sie müssen der Kontaktaufnahme zustimmen.",
   }),
   analyticsConsent: z.boolean().optional(),
+  rabattConsent: z.boolean().optional(),
 });
 type LeadFormValues = z.infer<typeof formSchema>;
 interface LeadFormProps {
@@ -69,19 +69,16 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       notes: "",
       consent: false,
       analyticsConsent: false,
+      rabattConsent: false,
     },
   });
-  const stableScores = useMemo(() => JSON.stringify(scores), [scores]);
   const onSubmit = useCallback(async (values: LeadFormValues) => {
     setIsSubmitting(true);
-    const currentScores = JSON.parse(stableScores);
     const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
       ...values,
       scoreSummary: {
-        areaA: currentScores.areaA,
-        areaB: currentScores.areaB,
-        areaC: currentScores.areaC,
-        average: currentScores.average,
+        ...scores,
+        rabattConsent: values.rabattConsent ?? false,
       },
     };
     try {
@@ -94,20 +91,18 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
         localStorage.setItem('analyticsConsent', 'true');
         window.dispatchEvent(new CustomEvent('analyticsConsentChanged'));
         window.dispatchEvent(new CustomEvent('leadSubmit', {
-          detail: { lang, ...currentScores, employees: values.employeesRange }
+          detail: { lang, ...scores, employees: values.employeesRange }
         }));
       }
       toast.success("Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.");
       setIsSuccess(true);
-      // We don't call onSuccess() here anymore, to stay on the page for download.
-      // The user will navigate away via the "Thanks" screen button.
     } catch (error) {
       toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       console.error("Failed to submit lead:", error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [stableScores, lang]);
+  }, [scores, lang]);
   const handleDownload = useCallback(async () => {
     if (currentLead) {
       await downloadReport({ scores, lang, lead: currentLead });
@@ -244,6 +239,18 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
               </div>
             </FormItem>
           )} />
+          <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
+            <p className="text-primary font-semibold mb-2">{t(lang, 'discountInfo')}</p>
+            <FormField control={form.control} name="rabattConsent" render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
+                <div className="space-y-1 leading-none">
+                  <Label htmlFor="rabattConsent" className="cursor-pointer">{t(lang, 'secureDiscount')}</Label>
+                  <p className="text-sm text-muted-foreground">{t(lang, 'secureDiscountText')}</p>
+                </div>
+              </FormItem>
+            )} />
+          </div>
           <Button type="submit" size="lg" className="w-full btn-gradient text-lg transition-transform duration-200 hover:scale-105 active:scale-95" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
             {t(lang, 'submitAndConsult')}

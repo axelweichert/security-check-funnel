@@ -36,5 +36,6 @@ export interface Lead {
     areaB: number;
     areaC: number;
     average: number;
+    rabattConsent?: boolean;
   };
 }

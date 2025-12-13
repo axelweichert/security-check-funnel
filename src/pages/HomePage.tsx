@@ -11,11 +11,12 @@ import { cn } from '@/lib/utils';
 import { Footer } from '@/components/Footer';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
+import { useShallow } from 'zustand/react/shallow';
 type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
 export function HomePage() {
   const lang = useCurrentLang();
   const [step, setStep] = useState<FunnelStep>('start');
-  const answers = useFunnelStore(s => s.answers);
+  const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const resetFunnel = useFunnelStore(s => s.reset);
   const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
@@ -128,7 +129,7 @@ const listVariants = {
 };
 const QuizStep = ({ stepIndex, questions, onBack, onNext, isNextDisabled }: { stepIndex: number, questions: Question[], onBack: () => void, onNext: () => void, isNextDisabled: boolean }) => {
   const lang = useCurrentLang();
-  const answers = useFunnelStore(s => s.answers);
+  const answers = useFunnelStore(useShallow(s => s.answers));
   const setAnswer = useFunnelStore(s => s.setAnswer);
   const containerRef = useRef<HTMLDivElement>(null);
   const stepTitles = [t(lang, 'step1Title'), t(lang, 'step2Title'), t(lang, 'step3Title')];

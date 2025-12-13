@@ -70,6 +70,8 @@ export function AdminPage() {
   const lang = useCurrentLang();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [filter, setFilter] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const navigate = useNavigate();
   const maturityLabels = getMaturityLabels(lang);
   useEffect(() => {
@@ -83,7 +85,6 @@ export function AdminPage() {
     }
   }, []);
   const fetchLeads = useCallback(async ({ pageParam }: { pageParam?: unknown }) => {
-    // Use URLSearchParams to avoid sending an empty `cursor` on the first request
     const params = new URLSearchParams({ limit: '10' });
     if (pageParam) {
       params.set('cursor', String(pageParam));
@@ -111,11 +112,16 @@ export function AdminPage() {
   }, [isError, error]);
   const allLeads = useMemo(() => data?.pages.flatMap((page) => page.items ?? []) ?? [], [data]);
   const filteredLeads = useMemo(() => {
-    return allLeads.filter(lead =>
-      lead.company.toLowerCase().includes(filter.toLowerCase()) ||
-      lead.contact.toLowerCase().includes(filter.toLowerCase())
-    );
-  }, [allLeads, filter]);
+    const fromTimestamp = fromDate ? new Date(fromDate).getTime() : 0;
+    const toTimestamp = toDate ? new Date(toDate).setHours(23, 59, 59, 999) : Infinity;
+    return allLeads.filter(lead => {
+      const leadDate = lead.createdAt;
+      const matchesDate = leadDate >= fromTimestamp && leadDate <= toTimestamp;
+      const matchesSearch = lead.company.toLowerCase().includes(filter.toLowerCase()) ||
+                            lead.contact.toLowerCase().includes(filter.toLowerCase());
+      return matchesDate && matchesSearch;
+    });
+  }, [allLeads, filter, fromDate, toDate]);
   const chartData = useMemo(() => {
     if (allLeads.length === 0) return [];
     const counts = { low: 0, medium: 0, high: 0 };
@@ -134,6 +140,31 @@ export function AdminPage() {
     setIsAuthenticated(false);
     navigate('/');
   }, [navigate]);
+  const handleExport = useCallback(() => {
+    if (filteredLeads.length === 0) {
+      toast.warning("No leads to export for the selected criteria.");
+      return;
+    }
+    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Date\n";
+    const csvRows = filteredLeads.map(l => {
+      const row = [
+        l.company, l.contact, l.email, l.phone, l.employeesRange, l.role, l.notes,
+        l.scoreSummary.areaA, l.scoreSummary.areaB, l.scoreSummary.areaC, l.scoreSummary.average.toFixed(2),
+        l.scoreSummary.rabattConsent ? 'Yes' : 'No',
+        format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm')
+      ];
+      return row.map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',');
+    });
+    const csv = headers + csvRows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filteredLeads.length} leads exported successfully!`);
+  }, [filteredLeads]);
   if (!isAuthenticated) {
     return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
   }
@@ -154,10 +185,17 @@ export function AdminPage() {
           <Card className="lg:col-span-3 glass">
             <CardHeader>
               <CardTitle>{t(lang, 'leadsTitle')}</CardTitle>
-              <div className="relative mt-2">
-                <label htmlFor="search-leads" className="sr-only">{t(lang, 'searchPlaceholder')}</label>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="search-leads" placeholder={t(lang, 'searchPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-9" />
+              <div className="mt-4 flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-grow">
+                  <label htmlFor="search-leads" className="sr-only">{t(lang, 'searchPlaceholder')}</label>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="search-leads" placeholder={t(lang, 'searchPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-9" />
+                </div>
+                <Input type="date" aria-label={t(lang, 'fromDate')} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+                <Input type="date" aria-label={t(lang, 'toDate')} value={toDate} onChange={e => setToDate(e.target.value)} />
+                <Button onClick={handleExport} className="btn-gradient sm:ml-auto">
+                  {`${t(lang, 'exportCsv')} (${filteredLeads.length})`}
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
