@@ -15,19 +15,7 @@ interface ReportData {
   lang: Language;
   lead?: Partial<Lead>;
 }
-async function getLogoBase64(): Promise<string> {
-  try {
-    const response = await fetch('https://www.vonbusch.digital/img/logo_dark.svg');
-    if (!response.ok) throw new Error('Logo fetch failed');
-    const svgText = await response.text();
-    return `data:image/svg+xml;base64,${btoa(svgText)}`;
-  } catch (error) {
-    console.error("Failed to fetch or convert logo:", error);
-    // Return a placeholder or handle the error as needed
-    return '';
-  }
-}
-function generateReportHTML({ scores, lang, lead }: ReportData, logoBase64: string): string {
+function generateReportHTML({ scores, lang, lead }: ReportData): string {
   const overall = deriveOverallLabel(scores.average, lang);
   const areaALabel = deriveAreaLabel(scores.areaA, lang);
   const areaBLabel = deriveAreaLabel(scores.areaB, lang);
@@ -44,19 +32,19 @@ function generateReportHTML({ scores, lang, lead }: ReportData, logoBase64: stri
       body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #ffffff; color: #0f172a; }
       .page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; background-color: white; box-sizing: border-box; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px; }
-      .logo { height: 40px; }
+      .logo-title { font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; }
       .header-info { text-align: right; font-size: 12px; color: #6b7280; }
       .main-title { font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 32px; margin-bottom: 8px; }
       .summary { font-size: 16px; color: #475569; margin-bottom: 32px; }
-      .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
-      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background-color: #f8fafc; }
-      .card-title { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; }
+      .results-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background-color: #f8fafc; flex: 1 1 150mm; display: flex; flex-direction: column; }
+      .card-title { font-size: 14px; font-weight: 600; margin: 0 0 12px 0; }
       .ampel { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
       .card-text { font-size: 14px; color: #475569; margin-top: 12px; }
-      .support-section { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px; }
+      .support-section { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px; max-width: 90%; word-break: normal; text-wrap: balance; }
       .support-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
-      ul { padding-left: 20px; }
-      li { margin-bottom: 8px; }
+      ul { padding-left: 0; list-style-position: inside; }
+      li { margin-bottom: 0.5em; padding-left: 1.5em; text-indent: -1.5em; }
       .footer { margin-top: 48px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px; }
       .lead-info { background-color: #f1f5f9; padding: 16px; border-radius: 8px; margin-top: 24px; font-size: 14px; }
       .lead-info p { margin: 0 0 8px 0; }
@@ -76,7 +64,7 @@ function generateReportHTML({ scores, lang, lead }: ReportData, logoBase64: stri
     <body>
       <div class="page">
         <header class="header">
-          ${logoBase64 ? `<img src="${logoBase64}" alt="von Busch GmbH Logo" class="logo" />` : '<h1>von Busch GmbH</h1>'}
+          <h2 class="logo-title">von Busch GmbH</h2>
           <div class="header-info">
             <strong>von Busch GmbH</strong><br>
             Alfred-Bozi-Stra\u00DFe 12<br>
@@ -132,8 +120,7 @@ function generateReportHTML({ scores, lang, lead }: ReportData, logoBase64: stri
 export async function downloadReport(data: ReportData) {
   const toastId = toast.loading('Generating PDF report...');
   try {
-    const logoBase64 = await getLogoBase64();
-    const reportHtml = generateReportHTML(data, logoBase64);
+    const reportHtml = generateReportHTML(data);
     const reportElement = document.createElement('div');
     reportElement.style.position = 'absolute';
     reportElement.style.left = '-210mm'; // Position off-screen
