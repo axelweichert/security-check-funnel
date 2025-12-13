@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { StepCard } from '@/components/funnel/StepCard';
 import { ProgressStepper } from '@/components/funnel/ProgressStepper';
 import { LeadForm } from '@/components/funnel/LeadForm';
-import { useFunnelStore, getQuestions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, getAreaDetails, getResultTexts, type Question, type AnswersState } from '@/lib/funnel';
+import { useFunnelStore, getQuestions, computeAreaScores, computeAverageScore, deriveAreaLabel, deriveOverallLabel, getAreaDetails, getResultTexts, type Question } from '@/lib/funnel';
 import { useShallow } from 'zustand/react/shallow';
 import { ArrowLeft, BarChart, CheckCircle, Download, Shield, Users, Wifi } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { Footer } from '@/components/Footer';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
 import { useABVariant } from '@/stores/useABStore';
-import { generateReport, downloadReport } from '@/lib/reportGenerator';
+import { downloadReport } from '@/lib/reportGenerator';
 type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' | 'thanks';
 export function HomePage() {
   const lang = useCurrentLang();
@@ -24,16 +24,13 @@ export function HomePage() {
   const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
   const l1bAnswer = useFunnelStore(s => s.answers['L1-B']);
   const abVariant = useABVariant();
-
   const questions = useMemo(() => {
     const q = getQuestions(lang);
-    // Example A/B test: Change a question text for variant B
     if (abVariant === 'B') {
       q['L1-A'].text = t(lang, 'L1-A-text-B');
     }
     return q;
   }, [lang, abVariant]);
-
   const scores = useMemo(() => {
     const areaScores = computeAreaScores(answers, lang);
     const average = computeAverageScore(areaScores);
@@ -191,9 +188,8 @@ const ResultsScreen = ({ scores, onNext }: { scores: any, onNext: () => void }) 
   const areaCLabel = deriveAreaLabel(scores.areaC, lang);
   const areaDetails = getAreaDetails(lang);
   const resultTexts = getResultTexts(lang);
-  const handleDownload = () => {
-    const reportHtml = generateReport({ scores, lang });
-    downloadReport(reportHtml, `Security-Report-${new Date().toISOString().split('T')[0]}.html`);
+  const handleDownload = async () => {
+    await downloadReport({ scores, lang });
   };
   return (
     <motion.div

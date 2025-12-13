@@ -1,3 +1,6 @@
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { toast } from 'sonner';
 import {
   type AreaScores,
   deriveAreaLabel,
@@ -12,7 +15,19 @@ interface ReportData {
   lang: Language;
   lead?: Partial<Lead>;
 }
-export function generateReport({ scores, lang, lead }: ReportData): string {
+async function getLogoBase64(): Promise<string> {
+  try {
+    const response = await fetch('https://www.vonbusch.digital/img/logo_dark.svg');
+    if (!response.ok) throw new Error('Logo fetch failed');
+    const svgText = await response.text();
+    return `data:image/svg+xml;base64,${btoa(svgText)}`;
+  } catch (error) {
+    console.error("Failed to fetch or convert logo:", error);
+    // Return a placeholder or handle the error as needed
+    return '';
+  }
+}
+function generateReportHTML({ scores, lang, lead }: ReportData, logoBase64: string): string {
   const overall = deriveOverallLabel(scores.average, lang);
   const areaALabel = deriveAreaLabel(scores.areaA, lang);
   const areaBLabel = deriveAreaLabel(scores.areaB, lang);
@@ -26,7 +41,7 @@ export function generateReport({ scores, lang, lead }: ReportData): string {
   const styles = `
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-      body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #ffffff; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #ffffff; color: #0f172a; }
       .page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; background-color: white; box-sizing: border-box; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px; }
       .logo { height: 40px; }
@@ -45,7 +60,6 @@ export function generateReport({ scores, lang, lead }: ReportData): string {
       .footer { margin-top: 48px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px; }
       .lead-info { background-color: #f1f5f9; padding: 16px; border-radius: 8px; margin-top: 24px; font-size: 14px; }
       .lead-info p { margin: 0 0 8px 0; }
-      /* Ampel Colors */
       .bg-red { background-color: #fee2e2; color: #991b1b; }
       .bg-yellow { background-color: #fef3c7; color: #92400e; }
       .bg-green { background-color: #dcfce7; color: #166534; }
@@ -62,19 +76,19 @@ export function generateReport({ scores, lang, lead }: ReportData): string {
     <body>
       <div class="page">
         <header class="header">
-          <img src="https://www.vonbusch.digital/img/logo_dark.svg" alt="von Busch GmbH Logo" class="logo" />
+          ${logoBase64 ? `<img src="${logoBase64}" alt="von Busch GmbH Logo" class="logo" />` : '<h1>von Busch GmbH</h1>'}
           <div class="header-info">
-          <strong>von Busch GmbH</strong><br>
-          Alfred-Bozi-Stra\u00DFe 12<br>
-          33602 Bielefeld
+            <strong>von Busch GmbH</strong><br>
+            Alfred-Bozi-Stra\u00DFe 12<br>
+            33602 Bielefeld
           </div>
         </header>
         <main>
           <h1 class="main-title">${overall.headline}</h1>
           <p class="summary">${overall.summary}</p>
-          ${lead ? `
+          ${lead && lead.company ? `
             <div class="lead-info">
-              <p><strong>${t(lang, 'company')}:</strong> ${lead.company || ''}</p>
+              <p><strong>${t(lang, 'company')}:</strong> ${lead.company}</p>
               <p><strong>${t(lang, 'contact')}:</strong> ${lead.contact || ''}</p>
               <p><strong>${t(lang, 'tableDate')}:</strong> ${formatDate(lead.createdAt)}</p>
             </div>
@@ -115,13 +129,33 @@ export function generateReport({ scores, lang, lead }: ReportData): string {
     </html>
   `;
 }
-export function downloadReport(htmlContent: string, filename = 'Security-Report.html') {
-  const blob = new Blob([htmlContent], { type: 'text/html' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
+export async function downloadReport(data: ReportData) {
+  const toastId = toast.loading('Generating PDF report...');
+  try {
+    const logoBase64 = await getLogoBase64();
+    const reportHtml = generateReportHTML(data, logoBase64);
+    const reportElement = document.createElement('div');
+    reportElement.style.position = 'absolute';
+    reportElement.style.left = '-210mm'; // Position off-screen
+    reportElement.style.top = '0';
+    reportElement.innerHTML = reportHtml;
+    document.body.appendChild(reportElement);
+    const canvas = await html2canvas(reportElement.querySelector('.page') as HTMLElement, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+    document.body.removeChild(reportElement);
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    const filename = `Security-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
+    pdf.save(filename);
+    toast.success('Report downloaded successfully!', { id: toastId });
+  } catch (error) {
+    console.error('Failed to generate PDF:', error);
+    toast.error('Failed to generate PDF report. Please try again.', { id: toastId });
+  }
 }

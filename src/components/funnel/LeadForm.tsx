@@ -21,20 +21,23 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { AreaScores, deriveAreaLabel, deriveOverallLabel } from "@/lib/funnel";
+import { AreaScores, deriveAreaLabel } from "@/lib/funnel";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useState, useCallback, useMemo } from "react";
-import { Loader2, Heart } from "lucide-react";
+import { Loader2, Heart, Download, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Lead } from "@shared/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentLang } from "@/stores/useLangStore";
 import { t } from "@/lib/i18n";
+import { downloadReport } from "@/lib/reportGenerator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 const formSchema = z.object({
   company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
   contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
-  employeesRange: z.string().min(1, "Bitte wählen Sie die Mitarbeiterzahl."),
+  employeesRange: z.string().min(1, "Bitte w��hlen Sie die Mitarbeiterzahl."),
   email: z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein."),
   phone: z.string().min(1, "Telefonnummer ist ein Pflichtfeld."),
   role: z.string().optional(),
@@ -52,6 +55,8 @@ interface LeadFormProps {
 export function LeadForm({ scores, onSuccess }: LeadFormProps) {
   const lang = useCurrentLang();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [currentLead, setCurrentLead] = useState<Partial<Lead> | null>(null);
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -80,50 +85,64 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       },
     };
     try {
-      await api<Lead>('/api/leads', {
+      const createdLead = await api<Lead>('/api/leads', {
         method: 'POST',
         body: JSON.stringify(leadPayload),
       });
+      setCurrentLead(createdLead);
       if (values.analyticsConsent) {
         localStorage.setItem('analyticsConsent', 'true');
         window.dispatchEvent(new CustomEvent('analyticsConsentChanged'));
-        // Dispatch event for Plausible goal tracking
         window.dispatchEvent(new CustomEvent('leadSubmit', {
           detail: { lang, ...currentScores, employees: values.employeesRange }
         }));
       }
       toast.success("Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.");
-      const areaALabel = deriveAreaLabel(currentScores.areaA, lang);
-      const areaBLabel = deriveAreaLabel(currentScores.areaB, lang);
-      const areaCLabel = deriveAreaLabel(currentScores.areaC, lang);
-      const overallLabel = deriveOverallLabel(currentScores.average, lang);
-      const formattedBody = [
-        "Firmendaten:",
-        `- Firma: ${values.company}`,
-        `- Ansprechpartner: ${values.contact}`,
-        `- Mitarbeiter: ${values.employeesRange}`,
-        `- E-Mail: ${values.email}`,
-        `- Telefon: ${values.phone}`,
-        values.role ? `- Rolle: ${values.role}` : null,
-        values.notes ? `- Notizen: ${values.notes}` : null,
-        "",
-        "Score-Zusammenfassung:",
-        `- VPN/Remote: ${currentScores.areaA}/6 (${areaALabel.text})`,
-        `- Web/Online: ${currentScores.areaB}/6 (${areaBLabel.text})`,
-        `- Mitarbeiter-Sicherheit: ${currentScores.areaC}/6 (${areaCLabel.text})`,
-        `- Gesamt: ${currentScores.average.toFixed(1)}/6 (${overallLabel.headline})`,
-      ].filter(line => line !== null).join("\n");
-      const mailtoUrl = `mailto:security@vonbusch.digital?subject=${encodeURIComponent(`Security-Check Anfrage von ${values.company}`)}&body=${encodeURIComponent(formattedBody)}`;
-      window.location.href = mailtoUrl;
-      form.reset();
-      onSuccess();
+      setIsSuccess(true);
+      // We don't call onSuccess() here anymore, to stay on the page for download.
+      // The user will navigate away via the "Thanks" screen button.
     } catch (error) {
       toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
       console.error("Failed to submit lead:", error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [stableScores, form, onSuccess, lang]);
+  }, [stableScores, lang]);
+  const handleDownload = useCallback(async () => {
+    if (currentLead) {
+      await downloadReport({ scores, lang, lead: currentLead });
+    }
+  }, [currentLead, scores, lang]);
+  if (isSuccess) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-3xl mx-auto text-center space-y-6"
+      >
+        <Card className="shadow-soft border text-left">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-10 h-10 text-green-500" />
+              <div>
+                <CardTitle className="text-2xl font-bold">{t(lang, 'thanksHeadline')}</CardTitle>
+                <p className="text-muted-foreground">{t(lang, 'thanksText')}</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>Ein PDF-Bericht mit Ihren Ergebnissen steht zum Download bereit.</p>
+            <Button size="lg" onClick={handleDownload} className="w-full btn-gradient">
+              <Download className="mr-2 h-5 w-5" />
+              {t(lang, 'downloadReport')}
+            </Button>
+          </CardContent>
+        </Card>
+        <Button onClick={onSuccess} variant="outline">Weiter zum Abschluss</Button>
+      </motion.div>
+    );
+  }
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
