@@ -64,9 +64,9 @@ export function generateReport({ scores, lang, lead }: ReportData): string {
         <header class="header">
           <img src="https://www.vonbusch.digital/img/logo_dark.svg" alt="von Busch GmbH Logo" class="logo" />
           <div class="header-info">
-            <strong>von Busch GmbH</strong><br>
-            Alfred-Bozi-Straße 12<br>
-            33602 Bielefeld
+          <strong>von Busch GmbH</strong><br>
+          Alfred-Bozi-Stra\u00DFe 12<br>
+          33602 Bielefeld
           </div>
         </header>
         <main>
