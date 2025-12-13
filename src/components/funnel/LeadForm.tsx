@@ -223,8 +223,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
               <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
               <div className="space-y-1 leading-none">
-                <Label htmlFor="consent" className="cursor-pointer">{t(lang, 'consent')}</Label>
-                <p className="text-sm text-muted-foreground">{t(lang, 'consentText')}</p>
+                <Label htmlFor="consent" className="cursor-pointer">{t(lang, 'consentText')}</Label>
                 <FormMessage />
               </div>
             </FormItem>
