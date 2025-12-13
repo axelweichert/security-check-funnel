@@ -69,22 +69,25 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     // Mock webhook/email simulation for Phase 2
     const webhookUrl = 'https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c'; // Replace with actual CRM webhook URL
     
-    c.executionCtx.waitUntil(
-      fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createdLead),
-      })
+    // Fire-and-forget webhook request (no waitUntil, as executionCtx is unavailable)
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createdLead),
+    })
       .then(() => console.log(`[CRM WEBHOOK] Lead ${createdLead.id} forwarded successfully.`))
-      .catch(e => console.error('[CRM WEBHOOK ERROR]', e))
-    );
+      .catch(e => console.error('[CRM WEBHOOK ERROR]', e));
 
     return ok(c, createdLead);
   });
   app.get('/api/leads', async (c) => {
     await LeadEntity.ensureSeed(c.env); // Ensures index exists, no-op if data present
     const cursor = c.req.query('cursor');
-    const limit = c.req.query('limit') ? Math.max(1, Number(c.req.query('limit'))) : 25;
+    // Ensure a valid numeric limit; fallback to 1 if parsing fails (similar to other list endpoints)
+    const limit = c.req.query('limit')
+      ? Math.max(1, (Number(c.req.query('limit')) | 0))
+      : 25;
+```
     const page = await LeadEntity.list(c.env, cursor ?? null, limit);
     return ok(c, page);
   });
