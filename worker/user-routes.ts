@@ -2,9 +2,15 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { UserEntity, ChatBoardEntity, LeadEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
+import { cors } from 'hono/cors';
 import type { Lead } from "@shared/types";
 
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
+  app.use('/api/*', cors({
+    origin: '*',
+    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type'],
+  }));
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' } }));
 
   // USERS
