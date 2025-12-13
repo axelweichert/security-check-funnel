@@ -57,9 +57,29 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // LEADS
   app.post('/api/leads', async (c) => {
     const body = await c.req.json<Partial<Lead>>();
-    if (!isStr(body.company) || !isStr(body.contact) || !isStr(body.email) || !isStr(body.phone) || body.consent !== true) {
-      return bad(c, 'Missing required lead fields.');
+    console.log('[LEADS POST] body received:', body);
+    // ---- Validation ----
+    if (!isStr(body.company)) {
+      console.error('[LEADS VALID company] fail:', body.company, typeof body.company);
+      return bad(c, 'Valid company required.');
     }
+    if (!isStr(body.contact)) {
+      console.error('[LEADS VALID contact] fail:', body.contact, typeof body.contact);
+      return bad(c, 'Valid contact required.');
+    }
+    if (!isStr(body.email)) {
+      console.error('[LEADS VALID email] fail:', body.email, typeof body.email);
+      return bad(c, 'Valid email required.');
+    }
+    if (!isStr(body.phone)) {
+      console.error('[LEADS VALID phone] fail:', body.phone, typeof body.phone);
+      return bad(c, 'Valid phone required.');
+    }
+    if (body.consent !== true) {
+      console.error('[LEADS VALID consent] fail:', body.consent, typeof body.consent);
+      return bad(c, 'Consent must be true.');
+    }
+    console.log('[LEADS] Validation PASSED');
     const newLead: Lead = {
       id: crypto.randomUUID(),
       createdAt: Date.now(),
@@ -73,19 +93,27 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       consent: body.consent,
       scoreSummary: body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 },
     };
-    const createdLead = await LeadEntity.create(c.env, newLead);
+    // ---- Lead creation & CRM webhook ----
+    let createdLead: Lead;
+    try {
+      createdLead = await LeadEntity.create(c.env, newLead);
+      console.log('[LEADS CREATE] success:', createdLead.id);
 
-    // Mock webhook/email simulation for Phase 2
-    const webhookUrl = 'https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c'; // Replace with actual CRM webhook URL
+      const webhookUrl = 'https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c'; // Replace with actual CRM webhook URL
 
-    // Fire-and-forget webhook request (no waitUntil, as executionCtx is unavailable)
-    fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createdLead),
-    })
-      .then(() => console.log(`[CRM WEBHOOK] Lead ${createdLead.id} forwarded successfully.`))
-      .catch(e => console.error('[CRM WEBHOOK ERROR]', e));
+      // Fire‑and‑forget webhook request
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createdLead),
+      })
+        .then(() => console.log('[LEADS WEBHOOK] sent for', createdLead.id))
+        .catch(e => console.error('[LEADS WEBHOOK] error', e));
+
+    } catch (e) {
+      console.error('[LEADS FAIL]', e);
+      return bad(c, `Lead creation failed: ${(e as Error).message}`);
+    }
 
     return ok(c, createdLead);
   });
