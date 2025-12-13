@@ -1,12 +1,11 @@
 import {
   type AreaScores,
-  type Language,
   deriveAreaLabel,
   deriveOverallLabel,
   getAreaDetails,
   getResultTexts,
 } from './funnel';
-import { t } from './i18n';
+import { t, type Language } from './i18n';
 import type { Lead } from '@shared/types';
 interface ReportData {
   scores: AreaScores & { average: number };

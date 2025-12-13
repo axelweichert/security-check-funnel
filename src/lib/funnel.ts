@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { t, type Language } from './i18n';
 // --- TYPES ---
 export type AnswerId = string;
-export type QuestionId = 'L1-A' | 'L1-B' | 'L1-C' | 'L2-A1' | 'L2-A2' | 'L2-B1' | 'L2-B2' | 'L2-C1' | 'L3-A1' | 'L3-A1-ALT' | 'L3-B1' | 'L3-C1' | 'L1-A-B';
+export type QuestionId = 'L1-A' | 'L1-B' | 'L1-C' | 'L2-A1' | 'L2-A2' | 'L2-B1' | 'L2-B2' | 'L2-C1' | 'L3-A1' | 'L3-A1-ALT' | 'L3-B1' | 'L3-C1';
 export interface Answer {
   id: AnswerId;
   text: string;
@@ -15,7 +15,7 @@ export interface Question {
   subtext?: string;
   options: Answer[];
 }
-export type AnswersState = Record<QuestionId, AnswerId>;
+export type AnswersState = Record<QuestionId, AnswerId | ''>;
 export interface FunnelState {
   answers: AnswersState;
   setAnswer: (questionId: QuestionId, answerId: AnswerId) => void;

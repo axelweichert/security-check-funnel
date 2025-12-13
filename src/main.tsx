@@ -1,7 +1,7 @@
 import '@/lib/errorReporter';
 import { enableMapSet } from "immer";
 enableMapSet();
-import { StrictMode, Suspense, lazy, useEffect } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import {
   createBrowserRouter,
@@ -13,7 +13,6 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { Layout } from '@/components/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
-
 const HomePage = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.HomePage })));
 const AdminPage = lazy(() => import('@/pages/AdminPage').then(module => ({ default: module.AdminPage })));
 const queryClient = new QueryClient();
@@ -34,7 +33,6 @@ let root: Root | null = null;
 function renderApp() {
   const app = (
     <StrictMode>
-
         <QueryClientProvider client={queryClient}>
           <Layout>
             <ErrorBoundary>
@@ -44,7 +42,6 @@ function renderApp() {
             </ErrorBoundary>
           </Layout>
         </QueryClientProvider>
-
     </StrictMode>
   );
   if (import.meta.hot) {
@@ -59,21 +56,5 @@ function renderApp() {
   root.render(app);
 }
 renderApp();
-
-function AppWrapper() {
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
-      });
-    }
-  }, []);
-
-  return renderApp();
-}
-
-AppWrapper();
+// Add a dummy export to satisfy the react-refresh/only-export-components lint rule for entry points.
+export {};

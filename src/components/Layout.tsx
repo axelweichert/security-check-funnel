@@ -9,7 +9,6 @@ interface LayoutProps {
   title?: string;
   description?: string;
 }
-
 declare global {
   interface Window {
     plausible?: (event: string, options?: { props: Record<string, any> }) => void;
@@ -23,6 +22,16 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   const lang = useCurrentLang();
   const [analyticsConsent, setAnalyticsConsent] = useState(false);
   useEffect(() => {
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
     const checkConsent = () => {
       setAnalyticsConsent(localStorage.getItem('analyticsConsent') === 'true');
     };
@@ -36,7 +45,6 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       }
     };
     window.addEventListener('leadSubmit', handleLeadSubmit);
-
     return () => {
       window.removeEventListener('analyticsConsentChanged', checkConsent);
       window.removeEventListener('leadSubmit', handleLeadSubmit);
