@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+
+type Html2CanvasFn = (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>;
 import { toast } from 'sonner';
 import {
   type AreaScores,
@@ -126,11 +126,20 @@ export async function downloadReport(data: ReportData) {
     reportElement.style.top = '0';
     reportElement.innerHTML = reportHtml;
     document.body.appendChild(reportElement);
-    const canvas = await html2canvas(reportElement.querySelector('.page') as HTMLElement, {
-      scale: 1,
-      useCORS: false,
-      logging: false,
-    });
+    // Dynamically import browser‑only libraries
+    const jsPDFModule = await import('jspdf');
+    const jsPDF = jsPDFModule.default;
+    const html2canvasModule = await import('html2canvas');
+    const html2canvasFn = html2canvasModule.default as Html2CanvasFn;
+
+    const canvas = await html2canvasFn(
+      reportElement.querySelector('.page') as HTMLElement,
+      {
+        scale: 1,
+        useCORS: false,
+        logging: false,
+      }
+    );
     document.body.removeChild(reportElement);
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
