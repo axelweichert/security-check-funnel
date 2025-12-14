@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, InfiniteData } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Lead } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,7 +60,9 @@ export function AdminPage() {
       setIsAuthenticated(false);
     }
   }, []);
-  const fetchLeads = useCallback(async ({ pageParam }: { pageParam?: string }) => {
+  // TanStack QueryFunction receives a context object; we safely extract `pageParam`
+  const fetchLeads = useCallback(async (context: { pageParam?: unknown }) => {
+    const pageParam = typeof context.pageParam === 'string' ? context.pageParam : undefined;
     const params = new URLSearchParams({ limit: '10' });
     if (pageParam) {
       params.set('cursor', pageParam);
@@ -78,7 +80,8 @@ export function AdminPage() {
   } = useInfiniteQuery<{ items: Lead[]; next: string | null }, Error>({
     queryKey: ['leads'],
     queryFn: fetchLeads,
-    getNextPageParam: (lastPage) => lastPage?.next ?? undefined,
+    // Explicitly type `lastPage` to match the data shape returned by `fetchLeads`
+    getNextPageParam: (lastPage: { items: Lead[]; next: string | null }) => lastPage?.next ?? undefined,
     initialPageParam: undefined,
     enabled: isAuthenticated,
   });
