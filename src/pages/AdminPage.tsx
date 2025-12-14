@@ -21,7 +21,6 @@ import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { getQuestions } from '@/lib/funnel';
 import { Label } from '@/components/ui/label';
 import AdminLogin from '@/components/AdminLogin';
@@ -50,6 +49,7 @@ export function AdminPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const maturityLabels = getMaturityLabels(lang);
+  const totalQuestions = useMemo(() => Object.keys(getQuestions('de')).length, []);
   useEffect(() => {
     try {
       const auth = JSON.parse(localStorage.getItem('admin_auth') || 'null');
@@ -155,65 +155,38 @@ export function AdminPage() {
       toast.warning("No leads to export for the selected criteria.");
       return;
     }
-    // Define the question IDs that should be exported as separate columns
-    const questionIds = [
-      'L1-A', 'L1-B', 'L1-C',
-      'L2-A1', 'L2-A2',
-      'L2-B1', 'L2-B2',
-      'L2-C1',
-      'L3-A1', 'L3-A1-ALT',
-      'L3-B1',
-      'L3-C1',
-    ];
-    // Load German questions (the export is language‑independent, but the original spec uses 'de')
     const questions = getQuestions('de');
-
-    // Build CSV header: base columns + one column per question ID + processed + date
-    const headers =
-      'Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Firewall,VPN' +
-      questionIds.map(id => `,${id}-Antwort`).join('') +
-      ',Processed,Date\n';
-
+    const questionIds = Object.keys(questions);
+    const headers = [
+      'Company', 'Contact', 'Email', 'Phone', 'Employees', 'Role', 'Notes',
+      'AreaA_Score', 'AreaB_Score', 'AreaC_Score', 'Average_Score',
+      'Discount_Consent', 'Firewall', 'VPN',
+      ...questionIds.map(id => `${id}-Antwort`),
+      'Processed', 'Date'
+    ].join(',');
     const csvRows = filteredLeads.map(l => {
-      // Base columns (same as before, without the AnswersJSON column)
       const baseCols = [
-        l.company,
-        l.contact,
-        l.email,
-        l.phone,
-        l.employeesRange,
-        l.role,
-        l.notes,
-        l.scoreSummary.areaA,
-        l.scoreSummary.areaB,
-        l.scoreSummary.areaC,
-        l.scoreSummary.average.toFixed(2),
+        l.company, l.contact, l.email, l.phone, l.employeesRange, l.role, l.notes,
+        l.scoreSummary.areaA, l.scoreSummary.areaB, l.scoreSummary.areaC, l.scoreSummary.average.toFixed(2),
         l.scoreSummary.rabattConsent ? 'Yes' : 'No',
-        l.firewallProvider || '',
-        l.vpnProvider || '',
+        l.firewallProvider || '', l.vpnProvider || '',
       ];
-
-      // Build answer columns: "question text – option text"
       const answerCols = questionIds.map(qid => {
         const answerId = (l.scoreSummary.answers || {})[qid];
-        const q = questions[qid as any];
+        if (!answerId) return '';
+        const q = questions[qid as keyof typeof questions];
         const opt = q?.options?.find(o => o.id === answerId);
-        // If question or answer is missing, return empty string
-        if (!q) return '';
-        const answerText = opt?.text ? ` – ${opt.text}` : '';
+        const answerText = opt ? ` – ${opt.text}` : '';
         return `${q.text}${answerText}`;
       });
-
       const extraCols = [
         l.processed ? 'Yes' : 'No',
         format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm')
       ];
-
       const row = [...baseCols, ...answerCols, ...extraCols];
-      // Escape double quotes for CSV compliance
       return row.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',');
     });
-    const csv = headers + csvRows.join('\n');
+    const csv = headers + '\n' + csvRows.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -294,12 +267,13 @@ export function AdminPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell>
-
-```
+                              <Badge variant="outline" className="truncate max-w-[80px]">
+                                {getAnsweredCount(lead.scoreSummary.answers)}/{totalQuestions}
+                              </Badge>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Checkbox id={`processed-${lead.id}`} checked={!!lead.processed} aria-label={`Toggle processed for ${lead.company}`} onCheckedChange={(checked) => {mutateProcessed({id: lead.id, processed: !!checked})}} />
+                                <Checkbox id={`processed-${lead.id}`} checked={!!lead.processed} aria-label={`Mark ${lead.company} as processed`} onCheckedChange={(checked) => {mutateProcessed({id: lead.id, processed: !!checked})}} />
                                 {lead.processed && <Badge variant="default" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">✓ {t(lang, 'processedBadge')}</Badge>}
                               </div>
                             </TableCell>
@@ -313,11 +287,11 @@ export function AdminPage() {
                                     setSelectedLead(lead);
                                     setDetailsOpen(true);
                                   }}
-                                  aria-label={`Details of ${lead.company}`}
+                                  aria-label={`Details for ${lead.company}`}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setDeleteDialog({open: true, id: lead.id})} aria-label={`Delete lead ${lead.company}`}>
+                                <Button variant="ghost" size="icon" onClick={() => setDeleteDialog({open: true, id: lead.id})} aria-label={`Delete lead for ${lead.company}`}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </TableCell>
@@ -379,48 +353,44 @@ export function AdminPage() {
         </DialogContent>
       </Dialog>
       <Dialog open={detailsOpen} onOpenChange={open => { setDetailsOpen(open); if (!open) setSelectedLead(null); }}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh]">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedLead && (
             <>
               <DialogHeader>
-                <DialogTitle>Details: {selectedLead.company}</DialogTitle>
+                <DialogTitle id="details-dialog-title">Details: {selectedLead.company}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
-                <Collapsible>
-                  <CollapsibleTrigger className="cursor-pointer text-primary underline">
-                    Raw JSON
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2">
-                    <pre className="p-4 bg-muted rounded-md text-xs overflow-auto max-h-64 font-mono">
-                      {JSON.stringify(selectedLead, null, 2)}
-                    </pre>
-                  </CollapsibleContent>
-                </Collapsible>
-                <Collapsible>
-                  <CollapsibleTrigger className="cursor-pointer text-primary underline">
-                    Answers Map ({getAnsweredCount(selectedLead.scoreSummary.answers)} Antworten)
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-2 p-2 border rounded-md bg-muted/50 max-h-96 overflow-y-auto">
-                    {Object.entries(selectedLead.scoreSummary.answers || {})
-                      .filter(([_, a]) => a)
-                      .map(([qid, aid]) => {
-                        const questions = getQuestions(lang);
-                        const q = questions[qid as any];
-                        const opt = q?.options?.find(o => o.id === aid);
-                        return (
-                          <div key={qid} className="flex items-start gap-3 p-3 bg-background border rounded-md text-sm">
-                            <span className="font-mono text-muted-foreground min-w-[60px]">{qid}</span>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium line-clamp-2">{q?.text}</div>
-                            </div>
-                            <div className="font-mono bg-primary/10 px-2 py-1 rounded text-xs whitespace-nowrap">
-                              {aid} → {opt?.text || 'N/A'}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </CollapsibleContent>
-                </Collapsible>
+              <div className="space-y-4 py-4" aria-describedby="details-dialog-title">
+                <h4 className='font-semibold'>
+                  Klartext Antworten ({getAnsweredCount(selectedLead.scoreSummary.answers)})
+                </h4>
+                <div className='overflow-x-auto border rounded-md'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Frage</TableHead>
+                        <TableHead>Antwort</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {Object.entries(selectedLead.scoreSummary.answers || {})
+                        .filter(([_, aid]) => aid)
+                        .sort(([q], [r]) => q.localeCompare(r))
+                        .map(([qid, aid]) => {
+                          const questions = getQuestions('de');
+                          const q = questions[qid as keyof typeof questions];
+                          const opt = q?.options?.find(o => o.id === aid);
+                          return (
+                            <TableRow key={qid}>
+                              <TableCell className="font-mono text-xs">{qid}</TableCell>
+                              <TableCell className='max-w-lg line-clamp-2' title={q?.text}>{q?.text}</TableCell>
+                              <TableCell className='font-medium'>{opt?.text || 'N/A'}</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDetailsOpen(false)}>

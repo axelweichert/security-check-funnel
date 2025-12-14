@@ -93,7 +93,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   }, [title, description, lang]);
   useEffect(() => {
     const scriptId = 'plausible-analytics';
-    let script = document.getElementById(scriptId);
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
     if (analyticsConsent) {
       if (!script) {
         const newScript = document.createElement('script') as HTMLScriptElement;
@@ -101,10 +101,16 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
         newScript.defer = true;
         newScript.setAttribute('data-domain', 'check.vonbusch.digital');
         newScript.src = 'https://plausible.io/js/script.js';
+        newScript.setAttribute('crossorigin', 'anonymous'); // Fix for module script import failure
+        newScript.onerror = () => {
+          console.warn('Plausible script failed to load.');
+          newScript.remove();
+        };
         document.head.appendChild(newScript);
       }
     } else {
       if (script) {
+        script.onerror = null; // Clean up error handler before removing
         script.remove();
       }
     }
