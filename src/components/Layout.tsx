@@ -40,8 +40,9 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       window.plausible?.('pageview');
     };
     newScript.onerror = () => {
-      console.warn('Plausible script failed to load.'); // Fail silently
-      newScript.remove(); // Clean up the failed script tag
+      // Fail silently and remove the script tag to prevent clutter.
+      // Do not log a warning, as this is picked up by the error reporter.
+      newScript.remove();
     };
     document.head.appendChild(newScript);
   }, []);
