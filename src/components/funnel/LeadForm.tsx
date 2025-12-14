@@ -97,11 +97,16 @@ export function LeadForm({ scores, answers, onSuccess }: LeadFormProps) {
   const onSubmit = useCallback(async (values: LeadFormValues) => {
     setIsSubmitting(true);
       const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
-        ...values,
-        role: values.role || '',
-        notes: values.notes || '',
-        firewallProvider: values.firewallProvider || '',
-        vpnProvider: values.vpnProvider || '',
+        company: values.company,
+        contact: values.contact,
+        employeesRange: values.employeesRange,
+        email: values.email,
+        phone: values.phone,
+        role: values.role ?? '',
+        notes: values.notes ?? '',
+        firewallProvider: values.firewallProvider ?? '',
+        vpnProvider: values.vpnProvider ?? '',
+        consent: values.consent,
         scoreSummary: {
           ...scores,
           answers,

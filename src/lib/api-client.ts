@@ -1,12 +1,5 @@
 import { ApiResponse } from "../../shared/types"
-
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  // Determine the correct base URL depending on the environment.
-  // In development we proxy requests to the backend running on port 3000.
-  // In production (or preview) we use a relative path (same-origin).
-  // Determine the correct base URL depending on the environment.
-  // In development we proxy requests to the backend running on port 3000.
-  // In production (or preview) we use a relative path (same-origin).
   let baseUrl = '';
   if (import.meta.env.DEV && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     baseUrl = 'http://localhost:3000';
@@ -14,8 +7,28 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${baseUrl}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...(init ?? {})
-  })
-  const json = (await res.json()) as ApiResponse<T>
-  if (!res.ok || !json.success || json.data === undefined) throw new Error(json.error || 'Request failed')
-  return json.data
+  });
+  if (!res.ok) {
+    let errorMsg = `Request failed with status ${res.status}`;
+    try {
+      // Try to parse as JSON first, as this is the expected error format
+      const json = await res.json() as ApiResponse;
+      errorMsg = json.error || errorMsg;
+    } catch (e) {
+      // If JSON parsing fails, it might be a plain text or HTML error page
+      try {
+        const text = await res.text();
+        // Avoid using the full HTML page as an error message if it's too long
+        errorMsg = text.length < 500 ? text : errorMsg;
+      } catch (textError) {
+        // Ignore if reading text also fails
+      }
+    }
+    throw new Error(errorMsg);
+  }
+  const json = (await res.json()) as ApiResponse<T>;
+  if (!json.success || json.data === undefined) {
+    throw new Error(json.error || 'API request was not successful but did not return an error message.');
+  }
+  return json.data;
 }

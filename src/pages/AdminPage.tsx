@@ -77,7 +77,7 @@ export function AdminPage() {
     isError,
   } = useInfiniteQuery<{ items: Lead[]; next: string | null }, Error>({
     queryKey: ['leads'],
-    queryFn: ({ pageParam }) => fetchLeads({ pageParam: pageParam as string | undefined }),
+    queryFn: fetchLeads,
     getNextPageParam: (lastPage) => lastPage?.next ?? undefined,
     initialPageParam: undefined,
     enabled: isAuthenticated,

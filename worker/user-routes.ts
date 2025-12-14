@@ -74,7 +74,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const notesTrim = (body.notes ?? '').trim();
     const employeesRangeTrim = (body.employeesRange ?? '').trim() || 'N/A';
     const scoreSummary = body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 };
-    // Preserve any existing answers object; default to empty object if absent
     scoreSummary.answers = body.scoreSummary?.answers || {};
     scoreSummary.rabattConsent = !!scoreSummary.rabattConsent;
     const newLead: Lead = {
@@ -93,14 +92,11 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       vpnProvider: vpnTrim,
       scoreSummary: scoreSummary,
     };
-    console.log('[LEADS ANSWERS]', JSON.stringify(newLead.scoreSummary.answers || {}));
-    // ---- Lead creation & CRM webhook ----
     let createdLead: Lead;
     try {
       createdLead = await LeadEntity.create(c.env, newLead);
-      console.log('[LEADS CREATE] success:', createdLead.id);
-      const webhookUrl = 'https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c'; // Replace with actual CRM webhook URL
-       // Fire-and-forget webhook request
+      console.log('[LEADS POST] created:', createdLead.id);
+      const webhookUrl = 'https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c';
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,11 +111,13 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, createdLead);
   });
   app.get('/api/leads', async (c) => {
-    await LeadEntity.ensureSeed(c.env); // Ensures index exists, no-op if data present
+    await LeadEntity.ensureSeed(c.env);
     const cursorParam = c.req.query('cursor') || null;
     const limitParam = c.req.query('limit');
     const limit = limitParam ? Math.max(1, Number(limitParam) || 25) : 25;
+    console.log('[LEADS GET] cursor:', cursorParam, 'limit:', limit);
     const page = await LeadEntity.list(c.env, cursorParam, limit);
+    console.log('[LEADS GET] result count:', page.items.length);
     return ok(c, page);
   });
   app.patch('/api/leads/:id', async (c) => {
