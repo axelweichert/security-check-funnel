@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
-import { Shield, AlertTriangle, CheckCircle, Search, LogOut, Loader2, Trash2 } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Search, LogOut, Loader2, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -21,6 +21,8 @@ import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { getQuestions } from '@/lib/funnel';
 import { Label } from '@/components/ui/label';
 import AdminLogin from '@/components/AdminLogin';
 const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#3765EB' };
@@ -41,6 +43,8 @@ export function AdminPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: '' });
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [deletePassword, setDeletePassword] = useState('');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -150,7 +154,7 @@ export function AdminPage() {
       toast.warning("No leads to export for the selected criteria.");
       return;
     }
-    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Firewall,VPN,Processed,Date\n";
+    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Firewall,VPN,AnswersJSON,Processed,Date\n";
     const csvRows = filteredLeads.map(l => {
       const row = [
         l.company, l.contact, l.email, l.phone, l.employeesRange, l.role, l.notes,
@@ -158,6 +162,8 @@ export function AdminPage() {
         l.scoreSummary.rabattConsent ? 'Yes' : 'No',
         l.firewallProvider || '',
         l.vpnProvider || '',
+        // New column: JSON string of answers map
+        JSON.stringify(l.scoreSummary.answers || {}),
         l.processed ? 'Yes' : 'No',
         format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm')
       ];
@@ -218,6 +224,7 @@ export function AdminPage() {
                         <TableHead>{t(lang, 'tableContact')}</TableHead>
                         <TableHead>{t(lang, 'tableDate')}</TableHead>
                         <TableHead>{t(lang, 'tableRisk')}</TableHead>
+                        <TableHead>{lang === 'de' ? 'Antworten' : 'Answers'}</TableHead>
                         <TableHead>{t(lang, 'processed')}</TableHead>
                         <TableHead>{t(lang, 'firewallProvider')}</TableHead>
                         <TableHead>{t(lang, 'vpnProvider')}</TableHead>
@@ -243,6 +250,18 @@ export function AdminPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell>
+                                {/* Answers count */}
+                                {(() => {
+                                  const ansCount = Object.values(lead.scoreSummary.answers || {}).filter(Boolean).length;
+                                  const totalQuestions = Object.keys(getQuestions(lang)).length;
+                                  return (
+                                    <Badge variant="outline" className="text-xs">
+                                      {ansCount}/{totalQuestions}
+                                    </Badge>
+                                  );
+                                })()}
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-2">
                                 <Checkbox id={`processed-${lead.id}`} checked={!!lead.processed} aria-label={`Toggle processed for ${lead.company}`} onCheckedChange={(checked) => {mutateProcessed({id: lead.id, processed: !!checked})}} />
                                 {lead.processed && <Badge variant="default" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">✓ {t(lang, 'processedBadge')}</Badge>}
@@ -251,6 +270,19 @@ export function AdminPage() {
                             <TableCell><Badge variant="outline" className="truncate max-w-20">{lead.firewallProvider || '–'}</Badge></TableCell>
                             <TableCell><Badge variant="outline" className="truncate max-w-20">{lead.vpnProvider || '–'}</Badge></TableCell>
                             <TableCell className="text-right">
+                                {/* Details button */}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setDetailsOpen(true);
+                                  }}
+                                  aria-label={`Details of ${lead.company}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                {/* Delete button */}
                                 <Button variant="ghost" size="icon" onClick={() => setDeleteDialog({open: true, id: lead.id})} aria-label={`Delete lead ${lead.company}`}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
@@ -259,7 +291,7 @@ export function AdminPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} className="h-24 text-center">{t(lang, 'noLeads')}</TableCell>
+                          <TableCell colSpan={9} className="h-24 text-center">{t(lang, 'noLeads')}</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -310,6 +342,64 @@ export function AdminPage() {
             <Button variant="outline" onClick={() => setDeleteDialog({open: false, id: ''})}>{t(lang, 'cancel')}</Button>
             <Button variant="destructive" onClick={handleDeleteConfirm}>{t(lang, 'deleteLead')}</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={open => { setDetailsOpen(open); if (!open) setSelectedLead(null); }}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh]">
+          {selectedLead && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Details: {selectedLead.company}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
+                {/* Raw JSON */}
+                <Collapsible>
+                  <CollapsibleTrigger className="cursor-pointer text-primary underline">
+                    Raw JSON
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <pre className="p-4 bg-muted rounded-md text-xs overflow-auto max-h-64 font-mono">
+                      {JSON.stringify(selectedLead, null, 2)}
+                    </pre>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Answers map */}
+                <Collapsible>
+                  <CollapsibleTrigger className="cursor-pointer text-primary underline">
+                    Answers Map ({Object.values(selectedLead.scoreSummary.answers || {}).filter(Boolean).length} Antworten)
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 p-2 border rounded-md bg-muted/50 max-h-96 overflow-y-auto">
+                    {Object.entries(selectedLead.scoreSummary.answers || {})
+                      .filter(([_, a]) => a)
+                      .map(([qid, aid]) => {
+                        const questions = getQuestions(lang);
+                        const q = questions[qid as any];
+                        const opt = q?.options?.find(o => o.id === aid);
+                        return (
+                          <div key={qid} className="flex items-start gap-3 p-3 bg-background border rounded-md text-sm">
+                            <span className="font-mono text-muted-foreground min-w-[60px]">{qid}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium line-clamp-2">{q?.text}</div>
+                            </div>
+                            <div className="font-mono bg-primary/10 px-2 py-1 rounded text-xs whitespace-nowrap">
+                              {aid} → {opt?.text || 'N/A'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDetailsOpen(false)}>
+                  Schließen
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

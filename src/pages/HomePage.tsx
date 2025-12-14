@@ -50,7 +50,8 @@ export function HomePage() {
       case 'results':
         return <ResultsScreen scores={scores} onNext={() => setStep('form')} />;
       case 'form':
-        return <LeadForm scores={scores} onSuccess={() => setStep('thanks')} />;
+        return <LeadForm scores={scores} answers={answers} onSuccess={() => setStep('thanks')} />;
+```
       case 'thanks':
         return <ThanksScreen onReset={() => { resetFunnel(); setStep('start'); }} />;
       default:

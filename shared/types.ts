@@ -40,5 +40,6 @@ export interface Lead {
     areaC: number;
     average: number;
     rabattConsent?: boolean;
+    answers?: Record<string, string>;
   };
 }

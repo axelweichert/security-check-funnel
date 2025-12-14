@@ -74,6 +74,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const notesTrim = (body.notes ?? '').trim();
     const employeesRangeTrim = (body.employeesRange ?? '').trim() || 'N/A';
     const scoreSummary = body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 };
+    // Preserve any existing answers object; default to empty object if absent
+    scoreSummary.answers = body.scoreSummary?.answers || {};
     scoreSummary.rabattConsent = !!scoreSummary.rabattConsent;
     const newLead: Lead = {
       id: crypto.randomUUID(),

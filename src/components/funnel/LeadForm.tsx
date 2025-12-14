@@ -31,6 +31,7 @@ import type { Lead } from "@shared/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentLang } from "@/stores/useLangStore";
 import { t, getFirewallOptions, getVpnOptions } from "@/lib/i18n";
+import type { AnswersState } from "@/lib/funnel";
 import { downloadReport } from "@/lib/reportGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const formSchema = z.object({
@@ -52,9 +53,11 @@ const formSchema = z.object({
 type LeadFormValues = z.infer<typeof formSchema>;
 interface LeadFormProps {
   scores: AreaScores & { average: number };
+  /** Answers from the funnel steps – required for payload */
+  answers: AnswersState;
   onSuccess: () => void;
 }
-export function LeadForm({ scores, onSuccess }: LeadFormProps) {
+export function LeadForm({ scores, answers, onSuccess }: LeadFormProps) {
   const lang = useCurrentLang() ?? 'de';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -78,15 +81,17 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
   });
   const onSubmit = useCallback(async (values: LeadFormValues) => {
     setIsSubmitting(true);
-    const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
-      ...values,
-      firewallProvider: values.firewallProvider,
-      vpnProvider: values.vpnProvider,
-      scoreSummary: {
-        ...scores,
-        rabattConsent: values.rabattConsent ?? false,
-      },
-    };
+      const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
+        ...values,
+        firewallProvider: values.firewallProvider,
+        vpnProvider: values.vpnProvider,
+        scoreSummary: {
+          ...scores,
+          /** Preserve the answers from the funnel */
+          answers,
+          rabattConsent: values.rabattConsent ?? false,
+        },
+      };
     try {
       const createdLead = await api<Lead>('/api/leads', {
         method: 'POST',
@@ -108,7 +113,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [scores, lang]);
+  }, [scores, lang, answers]);
   const handleDownload = useCallback(async () => {
     if (currentLead) {
       await downloadReport({ scores, lang, lead: currentLead });
