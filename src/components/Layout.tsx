@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
 import { Toaster } from '@/components/ui/sonner';
@@ -21,11 +21,12 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   useTheme();
   const lang = useCurrentLang() ?? 'de';
   const [analyticsConsent, setAnalyticsConsent] = useState(false);
-  const plausibleRetryTimeout = useRef<NodeJS.Timeout | null>(null);
   const loadPlausible = useCallback(() => {
     const scriptId = 'plausible-analytics';
-    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
-    if (script) return; // Already loaded or loading
+    // If script already exists, do nothing.
+    if (document.getElementById(scriptId)) {
+      return;
+    }
     const newScript = document.createElement('script');
     newScript.id = scriptId;
     newScript.type = 'module';
@@ -34,16 +35,13 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     newScript.setAttribute('data-domain', 'check.vonbusch.digital');
     newScript.src = 'https://plausible.io/js/script.js';
     newScript.crossOrigin = 'anonymous';
-    newScript.integrity = 'sha384-M60H3goq7kR0u6F8L+pXW30mB86wjK0G9W1228sha384-3J4O9a7L3YVpa9/3Tj2oG88jB3/3Tj2oG88jB3'; // Example hash, replace with actual
     newScript.onload = () => {
       console.log('Plausible script loaded successfully.');
       window.plausible?.('pageview');
     };
     newScript.onerror = () => {
-      console.warn('Plausible script failed to load. Retrying in 500ms...');
-      newScript.remove();
-      if (plausibleRetryTimeout.current) clearTimeout(plausibleRetryTimeout.current);
-      plausibleRetryTimeout.current = setTimeout(loadPlausible, 500);
+      console.warn('Plausible script failed to load.'); // Fail silently
+      newScript.remove(); // Clean up the failed script tag
     };
     document.head.appendChild(newScript);
   }, []);
@@ -74,7 +72,6 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     return () => {
       window.removeEventListener('analyticsConsentChanged', checkConsent);
       window.removeEventListener('leadSubmit', handleLeadSubmit);
-      if (plausibleRetryTimeout.current) clearTimeout(plausibleRetryTimeout.current);
     };
   }, []);
   useEffect(() => {
@@ -120,19 +117,15 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   }, [title, description, lang]);
   useEffect(() => {
     const scriptId = 'plausible-analytics';
-    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    const script = document.getElementById(scriptId) as HTMLScriptElement | null;
     if (analyticsConsent) {
       if (!script) {
         loadPlausible();
       }
     } else {
       if (script) {
-        script.type = ''; // Prevent further execution
         script.onerror = null; // Clean up error handler before removing
         script.remove();
-      }
-      if (plausibleRetryTimeout.current) {
-        clearTimeout(plausibleRetryTimeout.current);
       }
     }
   }, [analyticsConsent, loadPlausible]);
