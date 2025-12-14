@@ -22,6 +22,7 @@ import { t } from '@/lib/i18n';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import AdminLogin from '@/components/AdminLogin';
 const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#3765EB' };
 const getMaturityLevel = (avgScore: number): 'high' | 'medium' | 'low' => {
   if (avgScore >= 4.5) return 'high';
@@ -33,42 +34,6 @@ const getMaturityLabels = (lang: 'de' | 'en'): Record<'high' | 'medium' | 'low',
     medium: { text: t(lang, 'riskMedium'), variant: 'secondary' },
     low: { text: t(lang, 'riskHigh'), variant: 'destructive' },
 });
-const AdminLogin = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
-    const lang = useCurrentLang();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (username === 'admin' && password === 'wmG7V6BNifmGjv7rEkh2') {
-            localStorage.setItem('admin_auth', JSON.stringify({ user: username, pass: password }));
-            onLoginSuccess();
-        } else {
-            setError(t(lang, 'loginError'));
-        }
-    };
-    return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-8 md:py-10 lg:py-12 flex items-center justify-center min-h-screen">
-                <Card className="w-full max-w-sm">
-                    <CardHeader>
-                        <CardTitle className="text-2xl">{t(lang, 'loginTitle')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            <Input type="text" placeholder={t(lang, 'loginUser')} value={username} onChange={e => setUsername(e.target.value)} required />
-                            <Input type="password" placeholder={t(lang, 'loginPass')} value={password} onChange={e => setPassword(e.target.value)} required />
-                            {error && <p className="text-sm text-destructive">{error}</p>}
-                            <Button type="submit" className="w-full">{t(lang, 'loginButton')}</Button>
-                            <Button type="button" variant="link" className="w-full" onClick={() => navigate('/')}>{t(lang, 'backToHome')}</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
-};
 export function AdminPage() {
   const lang = useCurrentLang();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -110,6 +75,7 @@ export function AdminPage() {
     queryFn: fetchLeads,
     getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     initialPageParam: null,
+    enabled: isAuthenticated,
   });
   const { mutate: mutateProcessed } = useMutation({
     mutationFn: async ({ id, processed }: { id: string; processed: boolean }) =>
@@ -127,6 +93,23 @@ export function AdminPage() {
     },
     onError: () => toast.error(t(lang, 'deleteError')),
   });
+  const handleDeleteConfirm = useCallback(() => {
+    try {
+      const authStr = localStorage.getItem('admin_auth');
+      if (!authStr) {
+        toast.error('No authentication found');
+        return;
+      }
+      const auth = JSON.parse(authStr);
+      if (deletePassword === auth.pass) {
+        mutateDelete(deleteDialog.id);
+      } else {
+        toast.error('Falsches Passwort');
+      }
+    } catch (e) {
+      toast.error('Authentifizierungsfehler');
+    }
+  }, [deletePassword, deleteDialog.id, mutateDelete]);
   useEffect(() => {
     if (isError && error) {
       toast.error(`Fehler beim Laden der Leads: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
@@ -188,18 +171,6 @@ export function AdminPage() {
     URL.revokeObjectURL(url);
     toast.success(`${filteredLeads.length} leads exported successfully!`);
   }, [filteredLeads]);
-  const handleDeleteConfirm = () => {
-    try {
-      const auth = JSON.parse(localStorage.getItem('admin_auth') || 'null');
-      if (auth && deletePassword === auth.pass) {
-        mutateDelete(deleteDialog.id);
-      } else {
-        toast.error('Falsches Passwort');
-      }
-    } catch (e) {
-      toast.error('Authentifizierungsfehler');
-    }
-  };
   if (!isAuthenticated) {
     return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
   }
@@ -220,7 +191,7 @@ export function AdminPage() {
           <Card className="lg:col-span-3 glass">
             <CardHeader>
               <CardTitle>{t(lang, 'leadsTitle')}</CardTitle>
-              <div className="mt-4 flex flex-col sm:flex-row gap-4">
+              <div className="mt-4 flex flex-col sm:flex-row gap-4 items-end">
                 <div className="relative flex-grow">
                   <label htmlFor="search-leads" className="sr-only">{t(lang, 'searchPlaceholder')}</label>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -267,7 +238,7 @@ export function AdminPage() {
                                     {maturityLabels[getMaturityLevel(lead.scoreSummary.average)].text}
                                 </Badge>
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell>
                               <div className="flex items-center gap-2">
                                 <Checkbox id={`processed-${lead.id}`} checked={!!lead.processed} aria-label={`Toggle processed for ${lead.company}`} onCheckedChange={(checked) => {mutateProcessed({id: lead.id, processed: !!checked})}} />
                                 {lead.processed && <Badge variant="default" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">✓ {t(lang, 'processedBadge')}</Badge>}
@@ -323,7 +294,7 @@ export function AdminPage() {
       <Dialog open={deleteDialog.open} onOpenChange={open => !open && setDeleteDialog({open: false, id: ''})}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t(lang, 'deleteConfirm')} "{allLeads.find(l => l.id === deleteDialog.id)?.company}"</DialogTitle>
+            <DialogTitle>{t(lang, 'deleteConfirm')} "{filteredLeads.find(l => l.id === deleteDialog.id)?.company || 'Unbekannt'}"</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 py-4">
             <Label htmlFor="delete-password">{t(lang, 'deletePasswordPrompt')}</Label>
