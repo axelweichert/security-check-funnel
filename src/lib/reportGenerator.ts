@@ -29,21 +29,20 @@ function generateReportHTML({ scores, lang, lead }: ReportData): string {
   const styles = `
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-      body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #ffffff; color: #0f172a; }
-      .page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; background-color: white; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif !important; margin: 0; padding: 0; background-color: #ffffff; color: #0f172a; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+      .page { width: 210mm; min-height: 297mm; padding: 15mm; box-sizing: border-box; max-width: 100%; margin: 0; background-color: white; }
       .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px; }
       .logo-title { font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; }
       .header-info { text-align: right; font-size: 12px; color: #6b7280; }
       .main-title { font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 32px; margin-bottom: 8px; }
-      .summary { font-size: 16px; color: #475569; margin-bottom: 32px; }
+      .summary { font-size: 16px; color: #475569; margin-bottom: 32px; text-wrap: balance; }
       .results-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
-      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background-color: #f8fafc; flex: 1 1 150mm; display: flex; flex-direction: column; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background-color: #f8fafc; flex: 1 1 calc(33.333% - 16px); min-width: 0; display: flex; flex-direction: column; font-size: 14px; line-height: 1.4; word-break: normal; hyphens: auto; text-wrap: balance; }
       .card-title { font-size: 14px; font-weight: 600; margin: 0 0 12px 0; }
-      .ampel { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+      .ampel { display: inline-flex; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; flex-shrink: 0; }
       .card-text { font-size: 14px; color: #475569; margin-top: 12px; }
-      .support-section { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px; max-width: 90%; word-break: normal; text-wrap: balance; }
-      .support-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
-      ul { padding-left: 0; list-style-position: inside; }
+      .support-section { margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px; max-width: 95%; }
+      ul { padding-left: 0; list-style-position: outside; }
       li { margin-bottom: 0.5em; padding-left: 1.5em; text-indent: -1.5em; }
       .footer { margin-top: 48px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px; }
       .lead-info { background-color: #f1f5f9; padding: 16px; border-radius: 8px; margin-top: 24px; font-size: 14px; }
@@ -128,16 +127,16 @@ export async function downloadReport(data: ReportData) {
     reportElement.innerHTML = reportHtml;
     document.body.appendChild(reportElement);
     const canvas = await html2canvas(reportElement.querySelector('.page') as HTMLElement, {
-      scale: 2,
-      useCORS: true,
+      scale: 1,
+      useCORS: false,
       logging: false,
     });
     document.body.removeChild(reportElement);
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    const pdfWidth = 210;
+    const pdfHeight = 297;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
     const filename = `Security-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
     pdf.save(filename);
     toast.success('Report downloaded successfully!', { id: toastId });

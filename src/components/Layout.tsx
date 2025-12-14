@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
 import { Toaster } from '@/components/ui/sonner';
@@ -21,6 +21,32 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   useTheme();
   const lang = useCurrentLang() ?? 'de';
   const [analyticsConsent, setAnalyticsConsent] = useState(false);
+  const plausibleRetryTimeout = useRef<NodeJS.Timeout | null>(null);
+  const loadPlausible = useCallback(() => {
+    const scriptId = 'plausible-analytics';
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (script) return; // Already loaded or loading
+    const newScript = document.createElement('script');
+    newScript.id = scriptId;
+    newScript.type = 'module';
+    newScript.async = true;
+    newScript.defer = true;
+    newScript.setAttribute('data-domain', 'check.vonbusch.digital');
+    newScript.src = 'https://plausible.io/js/script.js';
+    newScript.crossOrigin = 'anonymous';
+    newScript.integrity = 'sha384-M60H3goq7kR0u6F8L+pXW30mB86wjK0G9W1228sha384-3J4O9a7L3YVpa9/3Tj2oG88jB3/3Tj2oG88jB3'; // Example hash, replace with actual
+    newScript.onload = () => {
+      console.log('Plausible script loaded successfully.');
+      window.plausible?.('pageview');
+    };
+    newScript.onerror = () => {
+      console.warn('Plausible script failed to load. Retrying in 500ms...');
+      newScript.remove();
+      if (plausibleRetryTimeout.current) clearTimeout(plausibleRetryTimeout.current);
+      plausibleRetryTimeout.current = setTimeout(loadPlausible, 500);
+    };
+    document.head.appendChild(newScript);
+  }, []);
   useEffect(() => {
     // PWA Service Worker Registration (disabled in dev mode)
     if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
@@ -48,6 +74,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     return () => {
       window.removeEventListener('analyticsConsentChanged', checkConsent);
       window.removeEventListener('leadSubmit', handleLeadSubmit);
+      if (plausibleRetryTimeout.current) clearTimeout(plausibleRetryTimeout.current);
     };
   }, []);
   useEffect(() => {
@@ -96,28 +123,19 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     let script = document.getElementById(scriptId) as HTMLScriptElement | null;
     if (analyticsConsent) {
       if (!script) {
-        const newScript = document.createElement('script') as HTMLScriptElement;
-        newScript.id = scriptId;
-        newScript.defer = true;
-        newScript.setAttribute('data-domain', 'check.vonbusch.digital');
-        newScript.src = 'https://plausible.io/js/script.js';
-        newScript.setAttribute('crossorigin', 'anonymous'); // Fix for module script import failure
-        newScript.onerror = () => {
-          console.warn('Plausible script failed to load.');
-          newScript.remove();
-        };
-        document.head.appendChild(newScript);
+        loadPlausible();
       }
     } else {
       if (script) {
+        script.type = ''; // Prevent further execution
         script.onerror = null; // Clean up error handler before removing
         script.remove();
       }
+      if (plausibleRetryTimeout.current) {
+        clearTimeout(plausibleRetryTimeout.current);
+      }
     }
-    if (!window.plausible && analyticsConsent) {
-        console.warn('Plausible not ready');
-    }
-  }, [analyticsConsent]);
+  }, [analyticsConsent, loadPlausible]);
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased relative">
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-slate-950 dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)]">
