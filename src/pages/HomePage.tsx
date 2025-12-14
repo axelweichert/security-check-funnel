@@ -48,12 +48,11 @@ export function HomePage() {
       case 'level3':
         return <QuizStep key="level3" stepIndex={2} questions={level3Questions} onBack={() => setStep('level2')} onNext={() => setStep('results')} isNextDisabled={!isLevel3Complete} />;
       case 'results':
-        return <ResultsScreen scores={scores} onNext={() => setStep('form')} />;
+        return <ResultsScreen key="results" scores={scores} answers={answers} onNext={() => setStep('form')} />;
       case 'form':
         return <LeadForm scores={scores} answers={answers} onSuccess={() => setStep('thanks')} />;
-```
       case 'thanks':
-        return <ThanksScreen onReset={() => { resetFunnel(); setStep('start'); }} />;
+        return <ThanksScreen key="thanks" onReset={() => { resetFunnel(); setStep('start'); }} />;
       default:
         return <StartScreen onStart={() => setStep('level1')} />;
     }

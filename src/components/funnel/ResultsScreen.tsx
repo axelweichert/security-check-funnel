@@ -3,13 +3,15 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Users, Wifi } from 'lucide-react';
-import { deriveAreaLabel, deriveOverallLabel, getAreaDetails, getResultTexts, type AreaScores } from '@/lib/funnel';
+import { deriveAreaLabel, deriveOverallLabel, getAreaDetails, getResultTexts, type AreaScores, getQuestions } from '@/lib/funnel';
 import { cn } from '@/lib/utils';
 import { Footer } from '@/components/Footer';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
+import { Badge } from '@/components/ui/badge';
 interface ResultsScreenProps {
   scores: AreaScores & { average: number };
+  answers: Record<string, string>;
   onNext: () => void;
 }
 const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title: string, label: any, text: string }) => (
@@ -30,7 +32,7 @@ const ResultCard = ({ icon, title, label, text }: { icon: React.ReactNode, title
     </CardContent>
   </Card>
 );
-const ResultsScreenComponent = ({ scores, onNext }: ResultsScreenProps) => {
+const ResultsScreenComponent = ({ scores, answers, onNext }: ResultsScreenProps) => {
   const lang = useCurrentLang();
   const overall = deriveOverallLabel(scores.average, lang);
   const areaALabel = deriveAreaLabel(scores.areaA, lang);
@@ -38,6 +40,8 @@ const ResultsScreenComponent = ({ scores, onNext }: ResultsScreenProps) => {
   const areaCLabel = deriveAreaLabel(scores.areaC, lang);
   const areaDetails = getAreaDetails(lang);
   const resultTexts = getResultTexts(lang);
+  const answeredCount = Object.values(answers).filter(Boolean).length;
+  const totalQuestions = Object.keys(getQuestions(lang)).length;
   return (
     <motion.div
       key="results"
@@ -81,10 +85,13 @@ const ResultsScreenComponent = ({ scores, onNext }: ResultsScreenProps) => {
           <p>{t(lang, 'supportOutro')}</p>
         </CardContent>
       </Card>
-      <div className="text-center pt-6">
+      <div className="text-center pt-6 space-y-3">
         <Button size="lg" className="btn-gradient px-8 py-5 text-lg" onClick={onNext}>
           {t(lang, 'supportCta')}
         </Button>
+        <div className="text-center">
+            <Badge variant="outline" className="text-xs">{answeredCount}/{totalQuestions} Fragen beantwortet</Badge>
+        </div>
       </div>
       <Footer />
     </motion.div>

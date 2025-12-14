@@ -36,6 +36,7 @@ const getMaturityLabels = (lang: 'de' | 'en'): Record<'high' | 'medium' | 'low',
     medium: { text: t(lang, 'riskMedium'), variant: 'secondary' },
     low: { text: t(lang, 'riskHigh'), variant: 'destructive' },
 });
+const getAnsweredCount = (answers?: Record<string, string>) => Object.values(answers || {}).filter(Boolean).length;
 export function AdminPage() {
   const lang = useCurrentLang();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -162,7 +163,6 @@ export function AdminPage() {
         l.scoreSummary.rabattConsent ? 'Yes' : 'No',
         l.firewallProvider || '',
         l.vpnProvider || '',
-        // New column: JSON string of answers map
         JSON.stringify(l.scoreSummary.answers || {}),
         l.processed ? 'Yes' : 'No',
         format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm')
@@ -224,7 +224,7 @@ export function AdminPage() {
                         <TableHead>{t(lang, 'tableContact')}</TableHead>
                         <TableHead>{t(lang, 'tableDate')}</TableHead>
                         <TableHead>{t(lang, 'tableRisk')}</TableHead>
-                        <TableHead>{lang === 'de' ? 'Antworten' : 'Answers'}</TableHead>
+                        <TableHead>{t(lang, 'answeredCol')}</TableHead>
                         <TableHead>{t(lang, 'processed')}</TableHead>
                         <TableHead>{t(lang, 'firewallProvider')}</TableHead>
                         <TableHead>{t(lang, 'vpnProvider')}</TableHead>
@@ -250,16 +250,9 @@ export function AdminPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell>
-                                {/* Answers count */}
-                                {(() => {
-                                  const ansCount = Object.values(lead.scoreSummary.answers || {}).filter(Boolean).length;
-                                  const totalQuestions = Object.keys(getQuestions(lang)).length;
-                                  return (
-                                    <Badge variant="outline" className="text-xs">
-                                      {ansCount}/{totalQuestions}
-                                    </Badge>
-                                  );
-                                })()}
+                                <Badge variant="outline" className="text-xs">
+                                  {getAnsweredCount(lead.scoreSummary.answers)}/{Object.keys(getQuestions(lang)).length}
+                                </Badge>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -270,7 +263,6 @@ export function AdminPage() {
                             <TableCell><Badge variant="outline" className="truncate max-w-20">{lead.firewallProvider || '–'}</Badge></TableCell>
                             <TableCell><Badge variant="outline" className="truncate max-w-20">{lead.vpnProvider || '–'}</Badge></TableCell>
                             <TableCell className="text-right">
-                                {/* Details button */}
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -282,7 +274,6 @@ export function AdminPage() {
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
-                                {/* Delete button */}
                                 <Button variant="ghost" size="icon" onClick={() => setDeleteDialog({open: true, id: lead.id})} aria-label={`Delete lead ${lead.company}`}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
@@ -344,8 +335,6 @@ export function AdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={open => { setDetailsOpen(open); if (!open) setSelectedLead(null); }}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh]">
           {selectedLead && (
@@ -354,7 +343,6 @@ export function AdminPage() {
                 <DialogTitle>Details: {selectedLead.company}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
-                {/* Raw JSON */}
                 <Collapsible>
                   <CollapsibleTrigger className="cursor-pointer text-primary underline">
                     Raw JSON
@@ -365,11 +353,9 @@ export function AdminPage() {
                     </pre>
                   </CollapsibleContent>
                 </Collapsible>
-
-                {/* Answers map */}
                 <Collapsible>
                   <CollapsibleTrigger className="cursor-pointer text-primary underline">
-                    Answers Map ({Object.values(selectedLead.scoreSummary.answers || {}).filter(Boolean).length} Antworten)
+                    Answers Map ({getAnsweredCount(selectedLead.scoreSummary.answers)} Antworten)
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-2 p-2 border rounded-md bg-muted/50 max-h-96 overflow-y-auto">
                     {Object.entries(selectedLead.scoreSummary.answers || {})

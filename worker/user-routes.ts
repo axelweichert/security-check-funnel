@@ -93,6 +93,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       vpnProvider: vpnTrim,
       scoreSummary: scoreSummary,
     };
+    console.log('[LEADS ANSWERS]', JSON.stringify(newLead.scoreSummary.answers || {}));
     // ---- Lead creation & CRM webhook ----
     let createdLead: Lead;
     try {
