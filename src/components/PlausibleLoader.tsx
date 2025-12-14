@@ -28,7 +28,7 @@ export default function PlausibleLoader() {
     }
     const newScript = document.createElement('script');
     newScript.id = scriptId;
-    // Removed incorrect type attribute; Plausible script is not an ES module.
+    newScript.type = 'module';
     newScript.async = true;
     newScript.defer = true;
     newScript.setAttribute('data-domain', 'check.vonbusch.digital');

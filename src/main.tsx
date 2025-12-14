@@ -31,7 +31,20 @@ const router = createBrowserRouter([
   },
 ]);
 const container = document.getElementById('root')!;
-const root = createRoot(container);
+let root: Root | null = null;
+
+// Enable HMR for this entry point and ensure proper cleanup
+if (import.meta.hot) {
+  import.meta.hot.accept();
+  import.meta.hot.dispose(() => {
+    // Unmount the existing React root before the module is replaced
+    root?.unmount();
+    root = null;
+  });
+}
+
+// Create (or recreate) the React root and render the app
+root = createRoot(container);
 root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -45,9 +58,5 @@ root.render(
     </QueryClientProvider>
   </StrictMode>
 );
-if (import.meta.hot) {
-  // Enable HMR for this entry point
-  import.meta.hot.accept();
-}
 // Add a dummy export to satisfy the react-refresh/only-export-components lint rule for entry points.
 export {};

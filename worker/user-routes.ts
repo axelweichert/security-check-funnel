@@ -117,6 +117,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, { deletedCount, ids: list });
   });
 
+  /* 
   // ---------------------------------------------------------------------------
   // LEAD ENDPOINTS
   // ---------------------------------------------------------------------------
@@ -190,5 +191,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const deleted = await LeadEntity.delete(c.env, id);
     return ok(c, { deleted });
   });
+  */
 }
 //

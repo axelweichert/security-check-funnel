@@ -82,9 +82,30 @@ app.use(
   })
 );
 
+// Global error handler for all routes
+app.onError((err, c) => {
+  console.error(
+    '[HONO KV-LEADS ERROR]',
+    err instanceof Error ? err.message : err,
+    c.req.method,
+    c.req.url
+  );
+  return c.json(
+    {
+      success: false,
+      error: err instanceof Error ? err.message : 'Internal server error',
+    },
+    500
+  );
+});
+
 // CREATE LEAD
 app.post('/', async (c) => {
   console.log('[KV-LEADS POST] route hit');
+  if (!c.env?.KV_LEADS) {
+    console.log('[KV_LEADS MISSING - POST]');
+    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
+  }
 
   // Parse raw JSON body
   const rawBody = await c.req.text();
@@ -139,6 +160,10 @@ app.post('/', async (c) => {
 // LIST LEADS (paginated)
 app.get('/', async (c) => {
   console.log('[KV-LEADS GET] route hit');
+  if (!c.env?.KV_LEADS) {
+    console.log('[KV_LEADS MISSING - GET]');
+    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
+  }
   const limit = parseInt(c.req.query('limit') || '10', 10);
   const cursor = c.req.query('cursor') || undefined;
   try {
@@ -175,6 +200,10 @@ app.get('/', async (c) => {
 app.patch('/:id', async (c) => {
   const id = c.req.param('id');
   const key = `lead:${id}`;
+  if (!c.env?.KV_LEADS) {
+    console.log(`[KV_LEADS MISSING - PATCH ${id}]`);
+    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
+  }
   try {
     const existingLead = await c.env.KV_LEADS.get<Lead>(key, 'json');
     if (!existingLead) {
@@ -215,6 +244,10 @@ app.patch('/:id', async (c) => {
 app.delete('/:id', async (c) => {
   const id = c.req.param('id');
   const key = `lead:${id}`;
+  if (!c.env?.KV_LEADS) {
+    console.log(`[KV_LEADS MISSING - DELETE ${id}]`);
+    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
+  }
   try {
     await c.env.KV_LEADS.delete(key);
     return c.json({ success: true, data: { deleted: true } });
