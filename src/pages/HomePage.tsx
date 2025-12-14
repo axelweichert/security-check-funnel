@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { LeadForm } from '@/components/funnel/LeadForm';
 import { useFunnelStore, getQuestions, computeAreaScores, computeAverageScore, type Question } from '@/lib/funnel';
 import { useCurrentLang } from '@/stores/useLangStore';
-import { useShallow } from 'zustand/react/shallow';
+
 import { StartScreen } from '@/components/funnel/StartScreen';
 import { QuizStep } from '@/components/funnel/QuizStep';
 import { ResultsScreen } from '@/components/funnel/ResultsScreen';
@@ -12,7 +12,7 @@ type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' 
 export function HomePage() {
   const lang = useCurrentLang();
   const [step, setStep] = useState<FunnelStep>('start');
-  const answers = useFunnelStore(useShallow(s => s.answers));
+  const answers = useFunnelStore(s => s.answers);
   const resetFunnel = useFunnelStore(s => s.reset);
   const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
   const l1bAnswer = useFunnelStore(s => s.answers['L1-B']);

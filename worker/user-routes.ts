@@ -4,6 +4,7 @@ import { UserEntity, ChatBoardEntity, LeadEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
 import { cors } from 'hono/cors';
 import type { Lead } from "@shared/types";
+
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.use('/api/*', cors({
     origin: '*',
