@@ -58,7 +58,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     startBenefit2Title: 'Moderne Best Practices',
     startBenefit2: 'Sieh, wo du im Vergleich zu Zero Trust, DDoS-Schutz & Awareness stehst.',
     startBenefit3Title: 'Konkrete Unterst\u00FCtzung',
-    startBenefit3: 'Erfahre wie wir dich mit unserem ganzheitlichen Three60 Ansatz konkret unterst\u00FCtzen k����nnen.',
+    startBenefit3: 'Erfahre wie wir dich mit unserem ganzheitlichen Three60 Ansatz konkret unterst\u00FCtzen k\u00F6nnen.',
     startDuration: 'Dauer: ca. 2–3 Minuten',
     startCta: 'Jetzt Security-Check starten',
     startTrust: 'von Busch GmbH – IT-Solutions & Security',

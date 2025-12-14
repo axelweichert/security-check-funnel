@@ -36,8 +36,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const formSchema = z.object({
   company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
   contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
-  employeesRange: z.string().min(1, "Bitte w��hlen Sie die Mitarbeiterzahl."),
-  email: z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein."),
+  employeesRange: z.string().min(1, "Bitte w\u00E4hlen Sie die Mitarbeiterzahl."),
+  email: z.string().email("Bitte geben Sie eine g\u00FCltige E-Mail-Adresse ein."),
   phone: z.string().min(1, "Telefonnummer ist ein Pflichtfeld."),
   role: z.string().optional(),
   notes: z.string().optional(),
