@@ -250,9 +250,7 @@ export function AdminPage() {
                                 </Badge>
                             </TableCell>
                             <TableCell>
-<Badge variant="outline" className="text-xs">
-  {getAnsweredCount(lead.scoreSummary.answers)}/{Object.keys(getQuestions('de')).length}
-</Badge>
+
 ```
                             </TableCell>
                             <TableCell>
