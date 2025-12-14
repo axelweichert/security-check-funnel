@@ -30,9 +30,9 @@ const getMaturityLevel = (avgScore: number): 'high' | 'medium' | 'low' => {
   return 'low';
 };
 const getMaturityLabels = (lang: 'de' | 'en'): Record<'high' | 'medium' | 'low', { text: string, variant: "default" | "secondary" | "destructive" | "outline" | null | undefined }> => ({
-    high: { text: t(lang, 'riskLow'), variant: 'default' },
-    medium: { text: t(lang, 'riskMedium'), variant: 'secondary' },
-    low: { text: t(lang, 'riskHigh'), variant: 'destructive' },
+    high: { text: t(lang, 'riskLow') as string, variant: 'default' },
+    medium: { text: t(lang, 'riskMedium') as string, variant: 'secondary' },
+    low: { text: t(lang, 'riskHigh') as string, variant: 'destructive' },
 });
 export function AdminPage() {
   const lang = useCurrentLang();
@@ -81,17 +81,17 @@ export function AdminPage() {
     mutationFn: async ({ id, processed }: { id: string; processed: boolean }) =>
       api(`/api/leads/${id}`, { method: 'PATCH', body: JSON.stringify({ processed }) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
-    onError: () => toast.error(t(lang, 'deleteError')),
+    onError: () => toast.error(t(lang, 'deleteError') as string),
   });
   const { mutate: mutateDelete } = useMutation({
     mutationFn: async (id: string) => api(`/api/leads/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      toast.success(t(lang, 'deleteSuccess'));
+      toast.success(t(lang, 'deleteSuccess') as string);
       setDeleteDialog({ open: false, id: '' });
       setDeletePassword('');
     },
-    onError: () => toast.error(t(lang, 'deleteError')),
+    onError: () => toast.error(t(lang, 'deleteError') as string),
   });
   const handleDeleteConfirm = useCallback(() => {
     try {
@@ -135,9 +135,9 @@ export function AdminPage() {
       counts[level]++;
     });
     return [
-      { name: t(lang, 'riskHigh'), value: counts.low, color: COLORS.low },
-      { name: t(lang, 'riskMedium'), value: counts.medium, color: COLORS.medium },
-      { name: t(lang, 'riskLow'), value: counts.high, color: COLORS.high },
+      { name: t(lang, 'riskHigh') as string, value: counts.low, color: COLORS.low },
+      { name: t(lang, 'riskMedium') as string, value: counts.medium, color: COLORS.medium },
+      { name: t(lang, 'riskLow') as string, value: counts.high, color: COLORS.high },
     ].filter(d => d.value > 0);
   }, [allLeads, lang]);
   const handleLogout = useCallback(() => {
@@ -150,12 +150,14 @@ export function AdminPage() {
       toast.warning("No leads to export for the selected criteria.");
       return;
     }
-    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Processed,Date\n";
+    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Firewall,VPN,Processed,Date\n";
     const csvRows = filteredLeads.map(l => {
       const row = [
         l.company, l.contact, l.email, l.phone, l.employeesRange, l.role, l.notes,
         l.scoreSummary.areaA, l.scoreSummary.areaB, l.scoreSummary.areaC, l.scoreSummary.average.toFixed(2),
         l.scoreSummary.rabattConsent ? 'Yes' : 'No',
+        l.firewallProvider || '',
+        l.vpnProvider || '',
         l.processed ? 'Yes' : 'No',
         format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm')
       ];
@@ -179,28 +181,28 @@ export function AdminPage() {
       <div className="py-8 md:py-10 lg:py-12">
         <header className="mb-8 flex flex-wrap justify-between items-center gap-4">
           <div>
-            <h1 className="text-4xl font-bold font-display text-foreground">{t(lang, 'adminTitle')}</h1>
-            <p className="text-muted-foreground">{t(lang, 'adminSubtitle')}</p>
+            <h1 className="text-4xl font-bold font-display text-foreground">{t(lang, 'adminTitle') as string}</h1>
+            <p className="text-muted-foreground">{t(lang, 'adminSubtitle') as string}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate('/')}>{t(lang, 'backToHome')}</Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label={t(lang, 'logout')}><LogOut className="h-4 w-4" /></Button>
+            <Button variant="outline" onClick={() => navigate('/')}>{t(lang, 'backToHome') as string}</Button>
+            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label={t(lang, 'logout') as string}><LogOut className="h-4 w-4" /></Button>
           </div>
         </header>
         <div className="grid gap-8 grid-cols-1 lg:grid-cols-3 lg:auto-rows-fr">
           <Card className="lg:col-span-3 glass">
             <CardHeader>
-              <CardTitle>{t(lang, 'leadsTitle')}</CardTitle>
+              <CardTitle>{t(lang, 'leadsTitle') as string}</CardTitle>
               <div className="mt-4 flex flex-col sm:flex-row gap-4 items-end">
                 <div className="relative flex-grow">
-                  <label htmlFor="search-leads" className="sr-only">{t(lang, 'searchPlaceholder')}</label>
+                  <label htmlFor="search-leads" className="sr-only">{t(lang, 'searchPlaceholder') as string}</label>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="search-leads" placeholder={t(lang, 'searchPlaceholder')} value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-9" />
+                  <Input id="search-leads" placeholder={t(lang, 'searchPlaceholder') as string} value={filter} onChange={(e) => setFilter(e.target.value)} className="pl-9" />
                 </div>
-                <Input type="date" aria-label={t(lang, 'fromDate')} value={fromDate} onChange={e => setFromDate(e.target.value)} />
-                <Input type="date" aria-label={t(lang, 'toDate')} value={toDate} onChange={e => setToDate(e.target.value)} />
+                <Input type="date" aria-label={t(lang, 'fromDate') as string} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+                <Input type="date" aria-label={t(lang, 'toDate') as string} value={toDate} onChange={e => setToDate(e.target.value)} />
                 <Button onClick={handleExport} className="btn-gradient sm:ml-auto">
-                  {`${t(lang, 'exportCsv')} (${filteredLeads.length})`}
+                  {`${t(lang, 'exportCsv') as string} (${filteredLeads.length})`}
                 </Button>
               </div>
             </CardHeader>
@@ -208,15 +210,17 @@ export function AdminPage() {
               {isLoading && <TableSkeleton />}
               {isError && <ErrorAlert error={error} />}
               {data && (
-                <div className="border rounded-md overflow-x-auto">
+                <div className="border rounded-md w-full overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t(lang, 'tableCompany')}</TableHead>
-                        <TableHead>{t(lang, 'tableContact')}</TableHead>
-                        <TableHead>{t(lang, 'tableDate')}</TableHead>
-                        <TableHead>{t(lang, 'tableRisk')}</TableHead>
-                        <TableHead>{t(lang, 'processed')}</TableHead>
+                        <TableHead>{t(lang, 'tableCompany') as string}</TableHead>
+                        <TableHead>{t(lang, 'tableContact') as string}</TableHead>
+                        <TableHead>{t(lang, 'tableDate') as string}</TableHead>
+                        <TableHead>{t(lang, 'tableRisk') as string}</TableHead>
+                        <TableHead>{t(lang, 'processed') as string}</TableHead>
+                        <TableHead>{t(lang, 'firewallProvider') as string}</TableHead>
+                        <TableHead>{t(lang, 'vpnProvider') as string}</TableHead>
                         <TableHead className="text-right">Aktionen</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -241,9 +245,11 @@ export function AdminPage() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <Checkbox id={`processed-${lead.id}`} checked={!!lead.processed} aria-label={`Toggle processed for ${lead.company}`} onCheckedChange={(checked) => {mutateProcessed({id: lead.id, processed: !!checked})}} />
-                                {lead.processed && <Badge variant="default" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">✓ {t(lang, 'processedBadge')}</Badge>}
+                                {lead.processed && <Badge variant="default" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">✓ {t(lang, 'processedBadge') as string}</Badge>}
                               </div>
                             </TableCell>
+                            <TableCell><Badge variant="outline" className="truncate max-w-20">{lead.firewallProvider || '–'}</Badge></TableCell>
+                            <TableCell><Badge variant="outline" className="truncate max-w-20">{lead.vpnProvider || '–'}</Badge></TableCell>
                             <TableCell className="text-right">
                                 <Button variant="ghost" size="icon" onClick={() => setDeleteDialog({open: true, id: lead.id})} aria-label={`Delete lead ${lead.company}`}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -253,7 +259,7 @@ export function AdminPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={7} className="h-24 text-center">{t(lang, 'noLeads')}</TableCell>
+                          <TableCell colSpan={8} className="h-24 text-center">{t(lang, 'noLeads') as string}</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -263,14 +269,14 @@ export function AdminPage() {
               {hasNextPage && (
                 <div className="mt-4 text-center">
                   <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                    {isFetchingNextPage ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t(lang, 'loading')}...</> : t(lang, 'loadMore')}
+                    {isFetchingNextPage ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t(lang, 'loading') as string}...</> : t(lang, 'loadMore') as string}
                   </Button>
                 </div>
               )}
             </CardContent>
           </Card>
           <Card className="lg:col-span-3 glass">
-            <CardHeader><CardTitle>{t(lang, 'chartTitle')}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t(lang, 'chartTitle') as string}</CardTitle></CardHeader>
             <CardContent>
               {isLoading && <Skeleton className="h-64 w-full" />}
               {chartData.length > 0 ? (
@@ -285,7 +291,7 @@ export function AdminPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 </motion.div>
-              ) : !isLoading && (<div className="h-64 flex items-center justify-center text-muted-foreground">{t(lang, 'chartNoData')}</div>)}
+              ) : !isLoading && (<div className="h-64 flex items-center justify-center text-muted-foreground">{t(lang, 'chartNoData') as string}</div>)}
             </CardContent>
           </Card>
         </div>
@@ -294,15 +300,15 @@ export function AdminPage() {
       <Dialog open={deleteDialog.open} onOpenChange={open => !open && setDeleteDialog({open: false, id: ''})}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t(lang, 'deleteConfirm')} "{filteredLeads.find(l => l.id === deleteDialog.id)?.company || 'Unbekannt'}"</DialogTitle>
+            <DialogTitle>{t(lang, 'deleteConfirm') as string} "{filteredLeads.find(l => l.id === deleteDialog.id)?.company || 'Unbekannt'}"</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 py-4">
-            <Label htmlFor="delete-password">{t(lang, 'deletePasswordPrompt')}</Label>
+            <Label htmlFor="delete-password">{t(lang, 'deletePasswordPrompt') as string}</Label>
             <Input id="delete-password" type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog({open: false, id: ''})}>{t(lang, 'cancel')}</Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>{t(lang, 'deleteLead')}</Button>
+            <Button variant="outline" onClick={() => setDeleteDialog({open: false, id: ''})}>{t(lang, 'cancel') as string}</Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>{t(lang, 'deleteLead') as string}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -32,6 +32,7 @@ export type TranslationKey =
   | 'employees' | 'employeesPlaceholder' | 'email' | 'emailPlaceholder' | 'phone' | 'phonePlaceholder'
   | 'role' | 'rolePlaceholder' | 'notes' | 'notesPlaceholder' | 'consent' | 'consentText' | 'submitAndConsult'
   | 'analyticsConsent' | 'analyticsConsentText' | 'discountInfo' | 'secureDiscount' | 'secureDiscountText'
+  | 'firewallProvider' | 'firewallProviderPlaceholder' | 'firewallOptions' | 'vpnProvider' | 'vpnProviderPlaceholder' | 'vpnOptions'
   // Thanks Screen
   | 'thanksHeadline' | 'thanksText' | 'visitWebsite' | 'bookAppointment'
   // Admin Page
@@ -42,7 +43,7 @@ export type TranslationKey =
   | 'startHook' | 'startHookCta' | 'startBenefit1Title' | 'startBenefit2Title' | 'startBenefit3Title'
   | 'supportIntro' | 'processed' | 'processedBadge' | 'deleteLead' | 'deleteConfirm' | 'deletePasswordPrompt'
   | 'deleteSuccess' | 'deleteError' | 'adminPassword' | 'cancel' | 'confirm';
-const translations: Record<Language, Record<TranslationKey, string>> = {
+const translations: Record<Language, Record<TranslationKey, any>> = {
   de: {
     back: 'Zur\u00FCck',
     next: 'Weiter',
@@ -68,7 +69,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     step2Title: 'Details zu deiner Umgebung',
     step3Title: 'Einsch\u00E4tzung deiner Reifegrade',
     'L1-A-text': '1. Setzt du heute bereits eine VPN- oder Remote-Access-L\u00F6sung für Mitarbeitende ein?',
-    'L1-A-text-B': '1. Wie ermöglichen Sie Ihren Mitarbeitern den Fernzugriff auf Unternehmensressourcen?',
+    'L1-A-text-B': '1. Wie erm��glichen Sie Ihren Mitarbeitern den Fernzugriff auf Unternehmensressourcen?',
     'L1-A-1': 'Ja, für einen Gro\u00DFteil unserer Remote-Nutzer',
     'L1-A-2': 'Ja, aber nur für wenige ausgew\u00E4hlte Mitarbeitende',
     'L1-A-3': 'Nein, wir haben aktuell keine VPN/Remote-Access-L��sung im Einsatz',
@@ -176,6 +177,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     secureDiscount: 'Ja, Rabatt sichern',
     secureDiscountText: '(optional, sichert dir den Rabatt bei Beratung)',
     submitAndConsult: 'Ergebnis absenden & Beratung anfordern',
+    firewallProvider: 'Aktuelle Firewall-Lösung',
+    firewallProviderPlaceholder: 'Bitte auswählen',
+    firewallOptions: { fortinet: 'Fortinet', checkpoint: 'Checkpoint', watchguard: 'Watchguard', paloAlto: 'Palo Alto', securePoint: 'SecurePoint', sophos: 'Sophos', barracuda: 'Barracuda', openSense: 'OpenSense', ubiquiti: 'Ubiquiti', andere: 'Andere' },
+    vpnProvider: 'Aktuelle VPN-Lösung',
+    vpnProviderPlaceholder: 'Bitte auswählen',
+    vpnOptions: { ipsecOpenvpn: 'IPsec/OpenVPN', zeroTrust: 'Zero Trust', sslVpnRdp: 'SSL-VPN/RDP', keine: 'Keine', andere: 'Andere' },
     thanksHeadline: 'Vielen Dank – wir melden uns bei dir!',
     thanksText: 'Unsere Spezialisten der von Busch GmbH melden sich zeitnah bei dir, um dein Ergebnis im Detail zu besprechen und dir konkrete Optionen mit unserem ganzheitlichen Three60 Ansatz zu zeigen.',
     visitWebsite: 'Website von Busch besuchen',
@@ -353,6 +360,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     secureDiscount: 'Yes, secure discount',
     secureDiscountText: '(optional, secures your discount for the consultation)',
     submitAndConsult: 'Submit Results & Request Consultation',
+    firewallProvider: 'Current Firewall Solution',
+    firewallProviderPlaceholder: 'Please select',
+    firewallOptions: { fortinet: 'Fortinet', checkpoint: 'Checkpoint', watchguard: 'Watchguard', paloAlto: 'Palo Alto', securePoint: 'SecurePoint', sophos: 'Sophos', barracuda: 'Barracuda', openSense: 'OpenSense', ubiquiti: 'Ubiquiti', other: 'Other' },
+    vpnProvider: 'Current VPN Solution',
+    vpnProviderPlaceholder: 'Please select',
+    vpnOptions: { ipsecOpenvpn: 'IPsec/OpenVPN', zeroTrust: 'Zero Trust', sslVpnRdp: 'SSL-VPN/RDP', none: 'None', other: 'Other' },
     thanksHeadline: 'Thank you—we will be in touch!',
     thanksText: 'Our specialists from von Busch GmbH will contact you shortly to discuss your results in detail and show you concrete options with our holistic Three60 approach.',
     visitWebsite: 'Visit von Busch Website',
@@ -398,6 +411,6 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     confirm: 'Confirm',
   },
 };
-export function t(lang: Language, key: TranslationKey): string {
+export function t(lang: Language, key: TranslationKey): string | Record<string, string> {
   return translations[lang][key] || key;
 }

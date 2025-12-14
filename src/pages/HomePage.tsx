@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { LeadForm } from '@/components/funnel/LeadForm';
 import { useFunnelStore, getQuestions, computeAreaScores, computeAverageScore, type Question } from '@/lib/funnel';
 import { useCurrentLang } from '@/stores/useLangStore';
-
+import { useShallow } from 'zustand/react/shallow';
 import { StartScreen } from '@/components/funnel/StartScreen';
 import { QuizStep } from '@/components/funnel/QuizStep';
 import { ResultsScreen } from '@/components/funnel/ResultsScreen';
@@ -12,7 +12,7 @@ type FunnelStep = 'start' | 'level1' | 'level2' | 'level3' | 'results' | 'form' 
 export function HomePage() {
   const lang = useCurrentLang();
   const [step, setStep] = useState<FunnelStep>('start');
-  const answers = useFunnelStore(s => s.answers);
+  const answers = useFunnelStore(useShallow(s => s.answers));
   const resetFunnel = useFunnelStore(s => s.reset);
   const l1aAnswer = useFunnelStore(s => s.answers['L1-A']);
   const l1bAnswer = useFunnelStore(s => s.answers['L1-B']);
@@ -39,21 +39,21 @@ export function HomePage() {
   const isLevel3Complete = level3Questions.every(q => answers[q.id]);
   const renderContent = () => {
     switch (step) {
-      case 'start': 
+      case 'start':
         return <StartScreen onStart={() => setStep('level1')} />;
-      case 'level1': 
+      case 'level1':
         return <QuizStep key="level1" stepIndex={0} questions={[questions['L1-A'], questions['L1-B'], questions['L1-C']]} onBack={() => setStep('start')} onNext={() => setStep('level2')} isNextDisabled={!isLevel1Complete} />;
-      case 'level2': 
+      case 'level2':
         return <QuizStep key="level2" stepIndex={1} questions={level2Questions} onBack={() => setStep('level1')} onNext={() => setStep('level3')} isNextDisabled={!isLevel2Complete} />;
-      case 'level3': 
+      case 'level3':
         return <QuizStep key="level3" stepIndex={2} questions={level3Questions} onBack={() => setStep('level2')} onNext={() => setStep('results')} isNextDisabled={!isLevel3Complete} />;
-      case 'results': 
+      case 'results':
         return <ResultsScreen scores={scores} onNext={() => setStep('form')} />;
-      case 'form': 
+      case 'form':
         return <LeadForm scores={scores} onSuccess={() => setStep('thanks')} />;
-      case 'thanks': 
+      case 'thanks':
         return <ThanksScreen onReset={() => { resetFunnel(); setStep('start'); }} />;
-      default: 
+      default:
         return <StartScreen onStart={() => setStep('level1')} />;
     }
   };

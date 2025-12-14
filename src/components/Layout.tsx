@@ -19,7 +19,7 @@ const defaultDescription = 'Stilvoller 3‑Schritt Security-Check (DE) mit Scori
 const ogImageUrl = 'https://www.vonbusch.digital/images/og-image.png'; // Placeholder OG image URL
 export function Layout({ children, title = defaultTitle, description = defaultDescription }: LayoutProps) {
   useTheme();
-  const lang = useCurrentLang();
+  const lang = useCurrentLang() ?? 'de';
   const [analyticsConsent, setAnalyticsConsent] = useState(false);
   useEffect(() => {
     // PWA Service Worker Registration (disabled in dev mode)
@@ -107,6 +107,9 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       if (script) {
         script.remove();
       }
+    }
+    if (!window.plausible && analyticsConsent) {
+        console.warn('Plausible not ready');
     }
   }, [analyticsConsent]);
   return (

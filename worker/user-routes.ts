@@ -76,6 +76,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       notes: body.notes,
       consent: body.consent,
       processed: false,
+      firewallProvider: body.firewallProvider?.trim() || '',
+      vpnProvider: body.vpnProvider?.trim() || '',
       scoreSummary: scoreSummary,
     };
     // ---- Lead creation & CRM webhook ----

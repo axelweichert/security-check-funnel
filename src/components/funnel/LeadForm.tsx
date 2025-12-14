@@ -36,11 +36,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const formSchema = z.object({
   company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
   contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
-  employeesRange: z.string().min(1, "Bitte w\u00E4hlen Sie die Mitarbeiterzahl."),
-  email: z.string().email("Bitte geben Sie eine g\u00FCltige E-Mail-Adresse ein."),
+  employeesRange: z.string().min(1, "Bitte wählen Sie die Mitarbeiterzahl."),
+  email: z.string().email("Bitte geben Sie eine g��ltige E-Mail-Adresse ein."),
   phone: z.string().min(1, "Telefonnummer ist ein Pflichtfeld."),
   role: z.string().optional(),
   notes: z.string().optional(),
+  firewallProvider: z.string().optional(),
+  vpnProvider: z.string().optional(),
   consent: z.boolean().refine((val) => val === true, {
     message: "Sie müssen der Kontaktaufnahme zustimmen.",
   }),
@@ -67,6 +69,8 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       phone: "",
       role: "",
       notes: "",
+      firewallProvider: "",
+      vpnProvider: "",
       consent: false,
       analyticsConsent: false,
       rabattConsent: false,
@@ -76,6 +80,8 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
     setIsSubmitting(true);
     const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
       ...values,
+      firewallProvider: values.firewallProvider,
+      vpnProvider: values.vpnProvider,
       scoreSummary: {
         ...scores,
         rabattConsent: values.rabattConsent ?? false,
@@ -121,8 +127,8 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
             <div className="flex items-center gap-3">
               <CheckCircle className="w-10 h-10 text-green-500" />
               <div>
-                <CardTitle className="text-2xl font-bold">{t(lang, 'thanksHeadline')}</CardTitle>
-                <p className="text-muted-foreground">{t(lang, 'thanksText')}</p>
+                <CardTitle className="text-2xl font-bold">{t(lang, 'thanksHeadline') as string}</CardTitle>
+                <p className="text-muted-foreground">{t(lang, 'thanksText') as string}</p>
               </div>
             </div>
           </CardHeader>
@@ -130,7 +136,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
             <p>Ein PDF-Bericht mit Ihren Ergebnissen steht zum Download bereit.</p>
             <Button size="lg" onClick={handleDownload} className="w-full btn-gradient">
               <Download className="mr-2 h-5 w-5" />
-              {t(lang, 'downloadReport')}
+              {t(lang, 'downloadReport') as string}
             </Button>
           </CardContent>
         </Card>
@@ -146,9 +152,9 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
       className="w-full max-w-3xl mx-auto bg-card p-6 md:p-8 rounded-xl shadow-soft border"
     >
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold font-display text-foreground">{t(lang, 'formHeadline')}</h2>
+        <h2 className="text-3xl font-bold font-display text-foreground">{t(lang, 'formHeadline') as string}</h2>
         <p className="text-muted-foreground mt-2 text-lg">
-          {t(lang, 'formSubline').split('–')[0]} <Heart className="inline h-4 w-4 text-red-500" /> {t(lang, 'formSubline').split('–')[1]}
+          {(t(lang, 'formSubline') as string).split('–')[0]} <Heart className="inline h-4 w-4 text-red-500" /> {(t(lang, 'formSubline') as string).split('–')[1]}
         </p>
       </div>
       <Form {...form}>
@@ -156,26 +162,26 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField control={form.control} name="company" render={({ field }) => (
               <FormItem>
-                <FormLabel>{t(lang, 'company')}</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'companyPlaceholder')} {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'company') as string}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'companyPlaceholder') as string} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="contact" render={({ field }) => (
               <FormItem>
-                <FormLabel>{t(lang, 'contact')}</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'contactPlaceholder')} {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'contact') as string}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'contactPlaceholder') as string} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
           </div>
           <FormField control={form.control} name="employeesRange" render={({ field }) => (
             <FormItem>
-              <FormLabel>{t(lang, 'employees')}</FormLabel>
+              <FormLabel>{t(lang, 'employees') as string}</FormLabel>
               {isSubmitting ? <Skeleton className="h-10 w-full" /> :
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger><SelectValue placeholder={t(lang, 'employeesPlaceholder')} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t(lang, 'employeesPlaceholder') as string} /></SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="1-20">1–20</SelectItem>
@@ -190,32 +196,66 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
             </FormItem>
           )} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <FormField control={form.control} name="firewallProvider" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t(lang, 'firewallProvider') as string} <span className="text-muted-foreground">(Optional)</span></FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder={t(lang, 'firewallProviderPlaceholder') as string} /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {Object.entries(t(lang, 'firewallOptions') as Record<string,string>).map(([key, value]) => (
+                      <SelectItem key={key} value={key}>{value}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="vpnProvider" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t(lang, 'vpnProvider') as string} <span className="text-muted-foreground">(Optional)</span></FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder={t(lang, 'vpnProviderPlaceholder') as string} /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {Object.entries(t(lang, 'vpnOptions') as Record<string,string>).map(([key, value]) => (
+                      <SelectItem key={key} value={key}>{value}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField control={form.control} name="email" render={({ field }) => (
               <FormItem>
-                <FormLabel>{t(lang, 'email')}</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input type="email" placeholder={t(lang, 'emailPlaceholder')} {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'email') as string}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input type="email" placeholder={t(lang, 'emailPlaceholder') as string} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <FormField control={form.control} name="phone" render={({ field }) => (
               <FormItem>
-                <FormLabel>{t(lang, 'phone')}</FormLabel>
-                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'phonePlaceholder')} {...field} />}</FormControl>
+                <FormLabel>{t(lang, 'phone') as string}</FormLabel>
+                <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'phonePlaceholder') as string} {...field} />}</FormControl>
                 <FormMessage />
               </FormItem>
             )} />
           </div>
           <FormField control={form.control} name="role" render={({ field }) => (
             <FormItem>
-              <FormLabel>{t(lang, 'role')} <span className="text-muted-foreground">(Optional)</span></FormLabel>
-              <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'rolePlaceholder')} {...field} />}</FormControl>
+              <FormLabel>{t(lang, 'role') as string} <span className="text-muted-foreground">(Optional)</span></FormLabel>
+              <FormControl>{isSubmitting ? <Skeleton className="h-10 w-full" /> : <Input placeholder={t(lang, 'rolePlaceholder') as string} {...field} />}</FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="notes" render={({ field }) => (
             <FormItem>
-              <FormLabel>{t(lang, 'notes')} <span className="text-muted-foreground">(Optional)</span></FormLabel>
-              <FormControl>{isSubmitting ? <Skeleton className="h-24 w-full" /> : <Textarea placeholder={t(lang, 'notesPlaceholder')} {...field} />}</FormControl>
+              <FormLabel>{t(lang, 'notes') as string} <span className="text-muted-foreground">(Optional)</span></FormLabel>
+              <FormControl>{isSubmitting ? <Skeleton className="h-24 w-full" /> : <Textarea placeholder={t(lang, 'notesPlaceholder') as string} {...field} />}</FormControl>
               <FormMessage />
             </FormItem>
           )} />
@@ -223,7 +263,7 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
               <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
               <div className="space-y-1 leading-none">
-                <Label htmlFor="consent" className="cursor-pointer">{t(lang, 'consentText')}</Label>
+                <Label htmlFor="consent" className="cursor-pointer">{t(lang, 'consentText') as string}</Label>
                 <FormMessage />
               </div>
             </FormItem>
@@ -232,27 +272,27 @@ export function LeadForm({ scores, onSuccess }: LeadFormProps) {
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
               <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
               <div className="space-y-1 leading-none">
-                <Label htmlFor="analyticsConsent" className="cursor-pointer">{t(lang, 'analyticsConsent')}</Label>
-                <p className="text-sm text-muted-foreground">{t(lang, 'analyticsConsentText')}</p>
+                <Label htmlFor="analyticsConsent" className="cursor-pointer">{t(lang, 'analyticsConsent') as string}</Label>
+                <p className="text-sm text-muted-foreground">{t(lang, 'analyticsConsentText') as string}</p>
                 <FormMessage />
               </div>
             </FormItem>
           )} />
           <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
-            <p className="text-primary font-semibold mb-2">{t(lang, 'discountInfo')}</p>
+            <p className="text-primary font-semibold mb-2">{t(lang, 'discountInfo') as string}</p>
             <FormField control={form.control} name="rabattConsent" render={({ field }) => (
               <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                 <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl>
                 <div className="space-y-1 leading-none">
-                  <Label htmlFor="rabattConsent" className="cursor-pointer">{t(lang, 'secureDiscount')}</Label>
-                  <p className="text-sm text-muted-foreground">{t(lang, 'secureDiscountText')}</p>
+                  <Label htmlFor="rabattConsent" className="cursor-pointer">{t(lang, 'secureDiscount') as string}</Label>
+                  <p className="text-sm text-muted-foreground">{t(lang, 'secureDiscountText') as string}</p>
                 </div>
               </FormItem>
             )} />
           </div>
           <Button type="submit" size="lg" className="w-full btn-gradient text-lg transition-transform duration-200 hover:scale-105 active:scale-95" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-            {t(lang, 'submitAndConsult')}
+            {t(lang, 'submitAndConsult') as string}
           </Button>
         </form>
       </Form>

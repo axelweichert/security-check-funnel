@@ -32,6 +32,8 @@ export interface Lead {
   notes?: string;
   consent: boolean;
   processed?: boolean;
+  firewallProvider?: string;
+  vpnProvider?: string;
   scoreSummary: {
     areaA: number;
     areaB: number;

@@ -46,6 +46,8 @@ export class LeadEntity extends IndexedEntity<Lead> {
     phone: "",
     consent: false,
     processed: false,
+    firewallProvider: "",
+    vpnProvider: "",
     scoreSummary: { areaA: 0, areaB: 0, areaC: 0, average: 0, rabattConsent: false },
   };
   static seedData = [];
