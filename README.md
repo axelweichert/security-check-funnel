@@ -80,6 +80,23 @@ This project is optimized for deployment on Cloudflare Pages.
 Cloudflare Pages will automatically detect `package-lock.json` and use `npm` for the build, ensuring a consistent and reliable deployment process.
 **GitHub Codespaces**: To run this project in a Codespace, simply run `npm install` followed by `npm run dev`.
 **Custom Domain**: After deployment, add a custom domain in the Cloudflare dashboard. Ensure `wrangler.jsonc` assets config handles SPA routing.
+## GitHub Sync & Export (Fix for Button Fails)
+If you are experiencing issues with a direct "Export to GitHub" button, the most reliable method is to connect your repository directly through the Cloudflare Pages dashboard. This workflow avoids common authentication and repository naming conflicts.
+**Recommended Workflow (No Terminal Required):**
+1. **Connect to Git in Cloudflare Pages:**
+   - Go to your Cloudflare Pages project > **Settings** > **Git Integration**.
+   - Click **Connect to Git** and choose **GitHub**.
+   - Authorize Cloudflare to access your GitHub account. You can then choose to create a new repository directly from the project or link to an existing one. This process handles all authentication seamlessly.
+2. **Automatic Deployments:**
+   - Once linked, Cloudflare Pages will automatically build and deploy your project every time you `git push` to your main branch.
+   - The build process will use `npm ci` (leveraging your committed `package-lock.json`) for fast and consistent builds.
+**Manual Export Alternative:**
+If you prefer to manage the code locally first:
+1. Run `npm install` to generate `package-lock.json`.
+2. Initialize a Git repository: `git init`.
+3. Add, commit, and push your code to a new repository on GitHub.com.
+4. Follow the "Connect to Git" steps above, but select your newly created repository.
+For more details, see the official documentation: [Cloudflare Pages Git Integration](https://developers.cloudflare.com/pages/configuration/git-integration/).
 ## Contributing
 1. Fork the repository.
 2. Create a feature branch: `git checkout -b feature/amazing-feature`.

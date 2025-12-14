@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LangToggle } from '@/components/LangToggle';
 import { Toaster } from '@/components/ui/sonner';
@@ -21,10 +21,10 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
   useTheme();
   const lang = useCurrentLang() ?? 'de';
   const [analyticsConsent, setAnalyticsConsent] = useState(false);
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
   const loadPlausible = useCallback(() => {
     const scriptId = 'plausible-analytics';
-    // If script already exists, do nothing.
-    if (document.getElementById(scriptId)) {
+    if (document.getElementById(scriptId) || scriptRef.current) {
       return;
     }
     const newScript = document.createElement('script');
@@ -41,9 +41,10 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     };
     newScript.onerror = () => {
       // Fail silently and remove the script tag to prevent clutter.
-      // Do not log a warning, as this is picked up by the error reporter.
-      newScript.remove();
+      scriptRef.current?.remove();
+      scriptRef.current = null;
     };
+    scriptRef.current = newScript;
     document.head.appendChild(newScript);
   }, []);
   useEffect(() => {
@@ -117,8 +118,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     favicon.setAttribute('type', 'image/x-icon');
   }, [title, description, lang]);
   useEffect(() => {
-    const scriptId = 'plausible-analytics';
-    const script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    const script = scriptRef.current;
     if (analyticsConsent) {
       if (!script) {
         loadPlausible();
@@ -127,6 +127,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       if (script) {
         script.onerror = null; // Clean up error handler before removing
         script.remove();
+        scriptRef.current = null;
       }
     }
   }, [analyticsConsent, loadPlausible]);
