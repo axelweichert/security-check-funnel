@@ -55,7 +55,7 @@ interface LeadFormProps {
   onSuccess: () => void;
 }
 export function LeadForm({ scores, onSuccess }: LeadFormProps) {
-  const lang = useCurrentLang();
+  const lang = useCurrentLang() ?? 'de';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [currentLead, setCurrentLead] = useState<Partial<Lead> | null>(null);
