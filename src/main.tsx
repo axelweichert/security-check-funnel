@@ -20,13 +20,13 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <HomePage />,
-    loader: async () => {},
+    loader: async () => null,
     errorElement: <RouteErrorBoundary />,
   },
   {
     path: "/admin",
     element: <AdminPage />,
-    loader: async () => {},
+    loader: async () => null,
     errorElement: <RouteErrorBoundary />,
   },
 ]);
