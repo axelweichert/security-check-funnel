@@ -35,15 +35,42 @@ import type { AnswersState } from "@/lib/funnel";
 import { downloadReport } from "@/lib/reportGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const formSchema = z.object({
-  company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
-  contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
-  employeesRange: z.string().min(1, "Bitte wählen Sie die Mitarbeiterzahl."),
-  email: z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein."),
-  phone: z.string().min(1, "Telefonnummer ist ein Pflichtfeld."),
-  role: z.string().optional(),
-  notes: z.string().optional(),
-  firewallProvider: z.string().optional(),
-  vpnProvider: z.string().optional(),
+  company: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string().min(1, "Firmenname ist ein Pflichtfeld.")
+  ),
+  contact: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string().min(1, "Ansprechpartner ist ein Pflichtfeld.")
+  ),
+  employeesRange: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string().min(1, "Bitte wählen Sie die Mitarbeiterzahl.")
+  ),
+  email: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim().toLowerCase() : val),
+    z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein.")
+  ),
+  phone: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string().min(1, "Telefonnummer ist ein Pflichtfeld.")
+  ),
+  role: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string()
+  ).optional(),
+  notes: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string()
+  ).optional(),
+  firewallProvider: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string()
+  ).optional(),
+  vpnProvider: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.string()
+  ).optional(),
   consent: z.boolean().refine((val) => val === true, {
     message: "Sie müssen der Kontaktaufnahme zustimmen.",
   }),

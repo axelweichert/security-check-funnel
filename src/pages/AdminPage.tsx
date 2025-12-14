@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { getQuestions } from '@/lib/funnel';
 import { Label } from '@/components/ui/label';
 import AdminLogin from '@/components/AdminLogin';
@@ -339,9 +339,10 @@ export function AdminPage() {
       </div>
       <Dialog open={deleteDialog.open} onOpenChange={open => !open && setDeleteDialog({open: false, id: ''})}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t(lang, 'deleteConfirm')} "{filteredLeads.find(l => l.id === deleteDialog.id)?.company || 'Unbekannt'}"</DialogTitle>
-          </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{t(lang, 'deleteConfirm')} "{filteredLeads.find(l => l.id === deleteDialog.id)?.company || 'Unbekannt'}"</DialogTitle>
+          <DialogDescription>Bestätigen Sie die Löschung dieses Leads durch Eingabe des Admin-Passworts.</DialogDescription>
+        </DialogHeader>
           <div className="space-y-2 py-4">
             <Label htmlFor="delete-password">{t(lang, 'deletePasswordPrompt')}</Label>
             <Input id="delete-password" type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
@@ -356,10 +357,11 @@ export function AdminPage() {
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedLead && (
             <>
-              <DialogHeader>
-                <DialogTitle id="details-dialog-title">Details: {selectedLead.company}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4" aria-describedby="details-dialog-title">
+          <DialogHeader>
+            <DialogTitle id="details-dialog-title">Details: {selectedLead.company}</DialogTitle>
+            <DialogDescription>Detaillierte Klartext‑Antworten dieses Leads in tabellarischer Form.</DialogDescription>
+          </DialogHeader>
+              <div className="space-y-4 py-4">
                 <h4 className='font-semibold'>
                   Klartext Antworten ({getAnsweredCount(selectedLead.scoreSummary.answers)})
                 </h4>
