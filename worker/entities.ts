@@ -45,6 +45,7 @@ export class LeadEntity extends IndexedEntity<Lead> {
     email: "",
     phone: "",
     consent: false,
+    processed: false,
     scoreSummary: { areaA: 0, areaB: 0, areaC: 0, average: 0, rabattConsent: false },
   };
   static seedData = [];

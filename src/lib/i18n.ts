@@ -40,7 +40,8 @@ export type TranslationKey =
   | 'noLeads' | 'loadMore' | 'loading' | 'chartTitle' | 'chartNoData' | 'loginTitle' | 'loginUser' | 'loginPass'
   | 'loginButton' | 'loginError' | 'backToHome' | 'logout' | 'exportCsv' | 'fromDate' | 'toDate'
   | 'startHook' | 'startHookCta' | 'startBenefit1Title' | 'startBenefit2Title' | 'startBenefit3Title'
-  | 'supportIntro';
+  | 'supportIntro' | 'processed' | 'processedBadge' | 'deleteLead' | 'deleteConfirm' | 'deletePasswordPrompt'
+  | 'deleteSuccess' | 'deleteError' | 'adminPassword' | 'cancel' | 'confirm';
 const translations: Record<Language, Record<TranslationKey, string>> = {
   de: {
     back: 'Zur\u00FCck',
@@ -70,7 +71,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'L1-A-text-B': '1. Wie ermöglichen Sie Ihren Mitarbeitern den Fernzugriff auf Unternehmensressourcen?',
     'L1-A-1': 'Ja, für einen Gro\u00DFteil unserer Remote-Nutzer',
     'L1-A-2': 'Ja, aber nur für wenige ausgew\u00E4hlte Mitarbeitende',
-    'L1-A-3': 'Nein, wir haben aktuell keine VPN/Remote-Access-Lösung im Einsatz',
+    'L1-A-3': 'Nein, wir haben aktuell keine VPN/Remote-Access-L��sung im Einsatz',
     'L1-A-4': 'Ich weiß es nicht',
     'L1-B-text': '2. Bildest du gesch\u00E4ftskritische Prozesse über eure Webseite oder Online-Plattformen ab?',
     'L1-B-subtext': '(z. B. Kundenportal, Webshop, Terminbuchung, Service-Portal)',
@@ -208,6 +209,16 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     exportCsv: 'CSV Exportieren',
     fromDate: 'Von Datum',
     toDate: 'Bis Datum',
+    processed: 'Bearbeitet',
+    processedBadge: 'Bearbeitet',
+    deleteLead: 'Löschen',
+    deleteConfirm: 'Lead wirklich löschen?',
+    deletePasswordPrompt: 'Admin-Passwort:',
+    deleteSuccess: 'Lead erfolgreich gelöscht.',
+    deleteError: 'Fehler beim Löschen des Leads.',
+    adminPassword: 'Admin-Passwort',
+    cancel: 'Abbrechen',
+    confirm: 'Bestätigen',
   },
   en: {
     back: 'Back',
@@ -375,6 +386,16 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     exportCsv: 'Export CSV',
     fromDate: 'From Date',
     toDate: 'To Date',
+    processed: 'Processed',
+    processedBadge: 'Processed',
+    deleteLead: 'Delete',
+    deleteConfirm: 'Really delete lead?',
+    deletePasswordPrompt: 'Admin Password:',
+    deleteSuccess: 'Lead deleted successfully.',
+    deleteError: 'Failed to delete lead.',
+    adminPassword: 'Admin Password',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
   },
 };
 export function t(lang: Language, key: TranslationKey): string {

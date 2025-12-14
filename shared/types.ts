@@ -31,6 +31,7 @@ export interface Lead {
   role?: string;
   notes?: string;
   consent: boolean;
+  processed?: boolean;
   scoreSummary: {
     areaA: number;
     areaB: number;

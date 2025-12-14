@@ -7,7 +7,7 @@ import type { Lead } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.use('/api/*', cors({
     origin: '*',
-    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
     allowHeaders: ['Content-Type'],
   }));
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' } }));
@@ -75,6 +75,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       role: body.role,
       notes: body.notes,
       consent: body.consent,
+      processed: false,
       scoreSummary: scoreSummary,
     };
     // ---- Lead creation & CRM webhook ----
@@ -103,6 +104,25 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const limit = c.req.query('limit') ? Math.max(1, (Number(c.req.query('limit')) | 0)) : 25;
     const page = await LeadEntity.list(c.env, cursorParam, limit);
     return ok(c, page);
+  });
+  app.patch('/api/leads/:id', async (c) => {
+    const id = c.req.param('id');
+    const body = await c.req.json<{ processed: boolean }>();
+    const lead = new LeadEntity(c.env, id);
+    if (!(await lead.exists())) {
+      return notFound(c);
+    }
+    const { processed } = body;
+    if (typeof processed !== 'boolean') {
+      return bad(c, 'processed field must be a boolean');
+    }
+    await lead.patch({ processed });
+    return ok(c, await lead.getState());
+  });
+  app.delete('/api/leads/:id', async (c) => {
+    const id = c.req.param('id');
+    const deleted = await LeadEntity.delete(c.env, id);
+    return ok(c, { deleted });
   });
   // DELETE: Users
   app.delete('/api/users/:id', async (c) => ok(c, { id: c.req.param('id'), deleted: await UserEntity.delete(c.env, c.req.param('id')) }));

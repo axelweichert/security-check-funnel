@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Lead } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
-import { Shield, AlertTriangle, CheckCircle, Search, LogOut, Loader2 } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Search, LogOut, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -19,6 +19,9 @@ import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { useCurrentLang } from '@/stores/useLangStore';
 import { t } from '@/lib/i18n';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 const COLORS = { low: '#ef4444', medium: '#f59e0b', high: '#3765EB' };
 const getMaturityLevel = (avgScore: number): 'high' | 'medium' | 'low' => {
   if (avgScore >= 4.5) return 'high';
@@ -72,7 +75,10 @@ export function AdminPage() {
   const [filter, setFilter] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: '' });
+  const [deletePassword, setDeletePassword] = useState('');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const maturityLabels = getMaturityLabels(lang);
   useEffect(() => {
     try {
@@ -104,6 +110,22 @@ export function AdminPage() {
     queryFn: fetchLeads,
     getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     initialPageParam: null,
+  });
+  const { mutate: mutateProcessed } = useMutation({
+    mutationFn: async ({ id, processed }: { id: string; processed: boolean }) =>
+      api(`/api/leads/${id}`, { method: 'PATCH', body: JSON.stringify({ processed }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
+    onError: () => toast.error(t(lang, 'deleteError')),
+  });
+  const { mutate: mutateDelete } = useMutation({
+    mutationFn: async (id: string) => api(`/api/leads/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      toast.success(t(lang, 'deleteSuccess'));
+      setDeleteDialog({ open: false, id: '' });
+      setDeletePassword('');
+    },
+    onError: () => toast.error(t(lang, 'deleteError')),
   });
   useEffect(() => {
     if (isError && error) {
@@ -145,12 +167,13 @@ export function AdminPage() {
       toast.warning("No leads to export for the selected criteria.");
       return;
     }
-    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Date\n";
+    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Processed,Date\n";
     const csvRows = filteredLeads.map(l => {
       const row = [
         l.company, l.contact, l.email, l.phone, l.employeesRange, l.role, l.notes,
         l.scoreSummary.areaA, l.scoreSummary.areaB, l.scoreSummary.areaC, l.scoreSummary.average.toFixed(2),
         l.scoreSummary.rabattConsent ? 'Yes' : 'No',
+        l.processed ? 'Yes' : 'No',
         format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm')
       ];
       return row.map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',');
@@ -165,6 +188,18 @@ export function AdminPage() {
     URL.revokeObjectURL(url);
     toast.success(`${filteredLeads.length} leads exported successfully!`);
   }, [filteredLeads]);
+  const handleDeleteConfirm = () => {
+    try {
+      const auth = JSON.parse(localStorage.getItem('admin_auth') || 'null');
+      if (auth && deletePassword === auth.pass) {
+        mutateDelete(deleteDialog.id);
+      } else {
+        toast.error('Falsches Passwort');
+      }
+    } catch (e) {
+      toast.error('Authentifizierungsfehler');
+    }
+  };
   if (!isAuthenticated) {
     return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
   }
@@ -209,10 +244,9 @@ export function AdminPage() {
                         <TableHead>{t(lang, 'tableCompany')}</TableHead>
                         <TableHead>{t(lang, 'tableContact')}</TableHead>
                         <TableHead>{t(lang, 'tableDate')}</TableHead>
-                        <TableHead>{t(lang, 'tableEmployees')}</TableHead>
-                        <TableHead>{t(lang, 'tableRole')}</TableHead>
-                        <TableHead>{t(lang, 'tableNotes')}</TableHead>
-                        <TableHead className="text-right">{t(lang, 'tableRisk')}</TableHead>
+                        <TableHead>{t(lang, 'tableRisk')}</TableHead>
+                        <TableHead>{t(lang, 'processed')}</TableHead>
+                        <TableHead className="text-right">Aktionen</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -228,13 +262,21 @@ export function AdminPage() {
                               </div>
                             </TableCell>
                             <TableCell>{format(new Date(lead.createdAt), 'dd.MM.yyyy', { locale: lang === 'de' ? de : enUS })}</TableCell>
-                            <TableCell>{lead.employeesRange}</TableCell>
-                            <TableCell>{lead.role || '-'}</TableCell>
-                            <TableCell className="max-w-xs truncate">{lead.notes || '-'}</TableCell>
-                            <TableCell className="text-right">
+                            <TableCell>
                                 <Badge variant={maturityLabels[getMaturityLevel(lead.scoreSummary.average)].variant}>
                                     {maturityLabels[getMaturityLevel(lead.scoreSummary.average)].text}
                                 </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center gap-2">
+                                <Checkbox id={`processed-${lead.id}`} checked={!!lead.processed} aria-label={`Toggle processed for ${lead.company}`} onCheckedChange={(checked) => {mutateProcessed({id: lead.id, processed: !!checked})}} />
+                                {lead.processed && <Badge variant="default" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">✓ {t(lang, 'processedBadge')}</Badge>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => setDeleteDialog({open: true, id: lead.id})} aria-label={`Delete lead ${lead.company}`}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -278,6 +320,21 @@ export function AdminPage() {
         </div>
         <Footer />
       </div>
+      <Dialog open={deleteDialog.open} onOpenChange={open => !open && setDeleteDialog({open: false, id: ''})}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t(lang, 'deleteConfirm')} "{allLeads.find(l => l.id === deleteDialog.id)?.company}"</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-4">
+            <Label htmlFor="delete-password">{t(lang, 'deletePasswordPrompt')}</Label>
+            <Input id="delete-password" type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialog({open: false, id: ''})}>{t(lang, 'cancel')}</Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm}>{t(lang, 'deleteLead')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
