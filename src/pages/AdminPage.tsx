@@ -60,10 +60,10 @@ export function AdminPage() {
       setIsAuthenticated(false);
     }
   }, []);
-  const fetchLeads = useCallback(async ({ pageParam }: { pageParam?: unknown }) => {
+  const fetchLeads = useCallback(async ({ pageParam }: { pageParam?: string }) => {
     const params = new URLSearchParams({ limit: '10' });
     if (pageParam) {
-      params.set('cursor', String(pageParam));
+      params.set('cursor', pageParam);
     }
     return api<{ items: Lead[]; next: string | null }>(`/api/leads?${params.toString()}`);
   }, []);
@@ -77,9 +77,9 @@ export function AdminPage() {
     isError,
   } = useInfiniteQuery<{ items: Lead[]; next: string | null }, Error>({
     queryKey: ['leads'],
-    queryFn: fetchLeads,
-    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
-    initialPageParam: null,
+    queryFn: ({ pageParam }) => fetchLeads({ pageParam: pageParam as string | undefined }),
+    getNextPageParam: (lastPage) => lastPage?.next ?? undefined,
+    initialPageParam: undefined,
     enabled: isAuthenticated,
   });
   const { mutate: mutateProcessed } = useMutation({

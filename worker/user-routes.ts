@@ -4,8 +4,6 @@ import { UserEntity, ChatBoardEntity, LeadEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
 import { cors } from 'hono/cors';
 import type { Lead } from "@shared/types";
-
-
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.use('/api/*', cors({
     origin: '*',
@@ -119,7 +117,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/leads', async (c) => {
     await LeadEntity.ensureSeed(c.env); // Ensures index exists, no-op if data present
     const cursorParam = c.req.query('cursor') || null;
-    const limit = c.req.query('limit') ? Math.max(1, (Number(c.req.query('limit')) | 0)) : 25;
+    const limitParam = c.req.query('limit');
+    const limit = limitParam ? Math.max(1, Number(limitParam) || 25) : 25;
     const page = await LeadEntity.list(c.env, cursorParam, limit);
     return ok(c, page);
   });

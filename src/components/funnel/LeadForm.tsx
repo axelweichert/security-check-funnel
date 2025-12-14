@@ -55,22 +55,10 @@ const formSchema = z.object({
     (val) => (typeof val === "string" ? val.trim() : val),
     z.string().min(1, "Telefonnummer ist ein Pflichtfeld.")
   ),
-  role: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
-    z.string()
-  ).optional(),
-  notes: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
-    z.string()
-  ).optional(),
-  firewallProvider: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
-    z.string()
-  ).optional(),
-  vpnProvider: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
-    z.string()
-  ).optional(),
+  role: z.string().optional(),
+  notes: z.string().optional(),
+  firewallProvider: z.string().optional(),
+  vpnProvider: z.string().optional(),
   consent: z.boolean().refine((val) => val === true, {
     message: "Sie müssen der Kontaktaufnahme zustimmen.",
   }),
@@ -110,11 +98,12 @@ export function LeadForm({ scores, answers, onSuccess }: LeadFormProps) {
     setIsSubmitting(true);
       const leadPayload: Omit<Lead, 'id' | 'createdAt'> = {
         ...values,
-        firewallProvider: values.firewallProvider,
-        vpnProvider: values.vpnProvider,
+        role: values.role || '',
+        notes: values.notes || '',
+        firewallProvider: values.firewallProvider || '',
+        vpnProvider: values.vpnProvider || '',
         scoreSummary: {
           ...scores,
-          /** Preserve the answers from the funnel */
           answers,
           rabattConsent: values.rabattConsent ?? false,
         },
