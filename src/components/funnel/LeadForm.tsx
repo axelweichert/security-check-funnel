@@ -36,23 +36,23 @@ import { downloadReport } from "@/lib/reportGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const formSchema = z.object({
   company: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
+    (val) => String(val ?? '').trim(),
     z.string().min(1, "Firmenname ist ein Pflichtfeld.")
   ),
   contact: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
+    (val) => String(val ?? '').trim(),
     z.string().min(1, "Ansprechpartner ist ein Pflichtfeld.")
   ),
   employeesRange: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
+    (val) => String(val ?? '').trim(),
     z.string().min(1, "Bitte wählen Sie die Mitarbeiterzahl.")
   ),
   email: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim().toLowerCase() : val),
+    (val) => String(val ?? '').trim().toLowerCase(),
     z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein.")
   ),
   phone: z.preprocess(
-    (val) => (typeof val === "string" ? val.trim() : val),
+    (val) => String(val ?? '').trim(),
     z.string().min(1, "Telefonnummer ist ein Pflichtfeld.")
   ),
   role: z.string().optional(),
@@ -68,7 +68,6 @@ const formSchema = z.object({
 type LeadFormValues = z.infer<typeof formSchema>;
 interface LeadFormProps {
   scores: AreaScores & { average: number };
-  /** Answers from the funnel steps – required for payload */
   answers: AnswersState;
   onSuccess: () => void;
 }
@@ -205,7 +204,7 @@ export function LeadForm({ scores, answers, onSuccess }: LeadFormProps) {
             <FormItem>
               <FormLabel>{t(lang, 'employees')}</FormLabel>
               {isSubmitting ? <Skeleton className="h-10 w-full" /> :
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value ?? ''}>
                 <FormControl>
                   <SelectTrigger><SelectValue placeholder={t(lang, 'employeesPlaceholder')} /></SelectTrigger>
                 </FormControl>
@@ -225,7 +224,7 @@ export function LeadForm({ scores, answers, onSuccess }: LeadFormProps) {
             <FormField control={form.control} name="firewallProvider" render={({ field }) => (
               <FormItem>
                 <FormLabel>{t(lang, 'firewallProvider')} <span className="text-muted-foreground">(Optional)</span></FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value ?? ''}>
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder={t(lang, 'firewallProviderPlaceholder')} /></SelectTrigger>
                   </FormControl>
@@ -241,7 +240,7 @@ export function LeadForm({ scores, answers, onSuccess }: LeadFormProps) {
             <FormField control={form.control} name="vpnProvider" render={({ field }) => (
               <FormItem>
                 <FormLabel>{t(lang, 'vpnProvider')} <span className="text-muted-foreground">(Optional)</span></FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value ?? ''}>
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder={t(lang, 'vpnProviderPlaceholder')} /></SelectTrigger>
                   </FormControl>
