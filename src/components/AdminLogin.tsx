@@ -21,7 +21,7 @@ const AdminLogin = ({ onLoginSuccess }: AdminLoginProps) => {
       localStorage.setItem('admin_auth', JSON.stringify({ user: username, pass: password }));
       onLoginSuccess();
     } else {
-      setError(t(lang, 'loginError'));
+      setError(t(lang, 'loginError') as string);
     }
   };
   return (
@@ -29,21 +29,21 @@ const AdminLogin = ({ onLoginSuccess }: AdminLoginProps) => {
       <div className="py-8 md:py-10 lg:py-12 flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-sm">
           <CardHeader>
-            <CardTitle className="text-2xl">{t(lang, 'loginTitle')}</CardTitle>
+            <CardTitle className="text-2xl">{t(lang, 'loginTitle') as string}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <Label htmlFor="username">{t(lang, 'loginUser')}</Label>
+                <Label htmlFor="username">{t(lang, 'loginUser') as string}</Label>
                 <Input id="username" type="text" value={username} onChange={e => setUsername(e.target.value)} required />
               </div>
               <div>
-                <Label htmlFor="password">{t(lang, 'loginPass')}</Label>
+                <Label htmlFor="password">{t(lang, 'loginPass') as string}</Label>
                 <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
               </div>
               {error && <p className="text-sm text-destructive text-center">{error}</p>}
-              <Button type="submit" className="w-full">{t(lang, 'loginButton')}</Button>
-              <Button type="button" variant="link" className="w-full" onClick={() => navigate('/')}>{t(lang, 'backToHome')}</Button>
+              <Button type="submit" className="w-full">{t(lang, 'loginButton') as string}</Button>
+              <Button type="button" variant="link" className="w-full" onClick={() => navigate('/')}>{t(lang, 'backToHome') as string}</Button>
             </form>
           </CardContent>
         </Card>

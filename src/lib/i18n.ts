@@ -1,12 +1,13 @@
 export type Language = 'de' | 'en';
-export type TranslationKey =
+// Define all possible translation keys
+export type AllTranslationKeys =
   // General
   | 'back' | 'next' | 'submit' | 'startOver'
   // Start Screen
   | 'startHeadline' | 'startHeadlineB' | 'startSubline' | 'startBenefit1' | 'startBenefit1B' | 'startBenefit2' | 'startBenefit3' | 'startDuration' | 'startCta' | 'startTrust' | 'startTrustPartner'
   // Progress Stepper
   | 'step1Title' | 'step2Title' | 'step3Title'
-  // Questions & Options (Keys are structured as ID-text or ID-subtext)
+  // Questions & Options
   | 'L1-A-text' | 'L1-A-text-B' | 'L1-A-1' | 'L1-A-2' | 'L1-A-3' | 'L1-A-4'
   | 'L1-B-text' | 'L1-B-subtext' | 'L1-B-1' | 'L1-B-2' | 'L1-B-3' | 'L1-B-4'
   | 'L1-C-text' | 'L1-C-1' | 'L1-C-2' | 'L1-C-3' | 'L1-C-4'
@@ -40,9 +41,12 @@ export type TranslationKey =
   | 'tableDate' | 'tableEmployees' | 'tableRole' | 'tableNotes' | 'tableRisk' | 'riskHigh' | 'riskMedium' | 'riskLow'
   | 'noLeads' | 'loadMore' | 'loading' | 'chartTitle' | 'chartNoData' | 'loginTitle' | 'loginUser' | 'loginPass'
   | 'loginButton' | 'loginError' | 'backToHome' | 'logout' | 'exportCsv' | 'fromDate' | 'toDate'
-  | 'startHook' | 'startHookCta' | 'startBenefit1Title' | 'startBenefit2Title' | 'startBenefit3Title'
   | 'supportIntro' | 'processed' | 'processedBadge' | 'deleteLead' | 'deleteConfirm' | 'deletePasswordPrompt'
-  | 'deleteSuccess' | 'deleteError' | 'adminPassword' | 'cancel' | 'confirm';
+  | 'deleteSuccess' | 'deleteError' | 'adminPassword' | 'cancel' | 'confirm'
+  | 'startHook' | 'startHookCta' | 'startBenefit1Title' | 'startBenefit2Title' | 'startBenefit3Title';
+export type ObjectTranslationKey = 'firewallOptions' | 'vpnOptions';
+export type StringTranslationKey = Exclude<AllTranslationKeys, ObjectTranslationKey>;
+export type TranslationKey = AllTranslationKeys;
 const translations: Record<Language, Record<TranslationKey, any>> = {
   de: {
     back: 'Zur\u00FCck',
@@ -69,7 +73,7 @@ const translations: Record<Language, Record<TranslationKey, any>> = {
     step2Title: 'Details zu deiner Umgebung',
     step3Title: 'Einsch\u00E4tzung deiner Reifegrade',
     'L1-A-text': '1. Setzt du heute bereits eine VPN- oder Remote-Access-L\u00F6sung für Mitarbeitende ein?',
-    'L1-A-text-B': '1. Wie erm��glichen Sie Ihren Mitarbeitern den Fernzugriff auf Unternehmensressourcen?',
+    'L1-A-text-B': '1. Wie erm����glichen Sie Ihren Mitarbeitern den Fernzugriff auf Unternehmensressourcen?',
     'L1-A-1': 'Ja, für einen Gro\u00DFteil unserer Remote-Nutzer',
     'L1-A-2': 'Ja, aber nur für wenige ausgew\u00E4hlte Mitarbeitende',
     'L1-A-3': 'Nein, wir haben aktuell keine VPN/Remote-Access-L��sung im Einsatz',
@@ -89,7 +93,7 @@ const translations: Record<Language, Record<TranslationKey, any>> = {
     'L2-A1-1': 'Klassisches VPN (z. B. IPsec, OpenVPN, Firewall-VPN)',
     'L2-A1-2': 'Zero Trust / Cloud-basierter Zugang (z. B. Cloudflare Access o. \u00E4.)',
     'L2-A1-3': 'SSL-VPN oder Remote-Desktop-Gateway',
-    'L2-A1-4': 'Ich weiß es nicht / Sonstige Lösung',
+    'L2-A1-4': 'Ich weiß es nicht / Sonstige L��sung',
     'L2-A2-text': '... und wie viele Nutzer greifen typischerweise darüber zu?',
     'L2-A2-1': '1–20 Nutzer',
     'L2-A2-2': '21–100 Nutzer',
@@ -411,6 +415,14 @@ const translations: Record<Language, Record<TranslationKey, any>> = {
     confirm: 'Confirm',
   },
 };
+export function t(lang: Language, key: StringTranslationKey): string;
+export function t(lang: Language, key: ObjectTranslationKey): Record<string, string>;
 export function t(lang: Language, key: TranslationKey): string | Record<string, string> {
   return translations[lang][key] || key;
+}
+export function getFirewallOptions(lang: Language): Record<string, string> {
+  return t(lang, 'firewallOptions');
+}
+export function getVpnOptions(lang: Language): Record<string, string> {
+  return t(lang, 'vpnOptions');
 }
