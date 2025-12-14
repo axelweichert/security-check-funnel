@@ -9,12 +9,13 @@ import {
   type Question,
 } from '@/lib/funnel';
 import { useCurrentLang } from '@/stores/useLangStore';
-
 import { StartScreen } from '@/components/funnel/StartScreen';
 import { QuizStep } from '@/components/funnel/QuizStep';
 import { ResultsScreen } from '@/components/funnel/ResultsScreen';
 import { ThanksScreen } from '@/components/funnel/ThanksScreen';
-
+/**
+ * Defines the possible steps in the security check funnel.
+ */
 type FunnelStep =
   | 'start'
   | 'level1'
@@ -23,24 +24,40 @@ type FunnelStep =
   | 'results'
   | 'form'
   | 'thanks';
-
+/**
+ * The main component for the von Busch Security Funnel.
+ * It orchestrates the entire 7-step user journey from the start screen to the final thank you message.
+ * State is managed by a combination of React's `useState` for the current step and Zustand for quiz answers.
+ * The backend for lead submission is powered by Cloudflare Pages Functions and KV storage via `/functions/api/leads`.
+ */
 export function HomePage() {
   const lang = useCurrentLang();
   const [step, setStep] = useState<FunnelStep>('start');
-
+  // Zustand selectors for answers. Using primitive selectors to prevent unnecessary re-renders.
   const answers = useFunnelStore((s) => s.answers);
   const resetFunnel = useFunnelStore((s) => s.reset);
   const l1aAnswer = useFunnelStore((s) => s.answers['L1-A']);
   const l1bAnswer = useFunnelStore((s) => s.answers['L1-B']);
-
+  /**
+   * Memoized questions object to avoid re-computation on every render.
+   * It recalculates only when the language changes.
+   */
   const questions = useMemo(() => getQuestions(lang), [lang]);
-
+  /**
+   * Memoized scores object.
+   * This recalculates the area scores and the average score only when answers or language change,
+   * optimizing performance by avoiding redundant calculations.
+   */
   const scores = useMemo(() => {
     const areaScores = computeAreaScores(answers, lang);
     const average = computeAverageScore(areaScores);
     return { ...areaScores, average };
   }, [answers, lang]);
-
+  /**
+   * Memoized list of questions for Level 2.
+   * The questions are dynamically determined based on the answers from Level 1,
+   * ensuring a conditional and relevant user flow.
+   */
   const level2Questions = useMemo(
     () => [
       (l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2') && questions['L2-A1'],
@@ -51,7 +68,10 @@ export function HomePage() {
     ].filter((q): q is Question => !!q),
     [l1aAnswer, l1bAnswer, questions],
   );
-
+  /**
+   * Memoized list of questions for Level 3.
+   * Similar to Level 2, questions are shown conditionally based on previous answers.
+   */
   const level3Questions = useMemo(
     () => [
       l1aAnswer === 'L1-A-1' || l1aAnswer === 'L1-A-2'
@@ -62,11 +82,14 @@ export function HomePage() {
     ].filter((q): q is Question => !!q),
     [l1aAnswer, questions],
   );
-
+  // Completion checks to enable/disable the "Next" button in each step.
   const isLevel1Complete = answers['L1-A'] && answers['L1-B'] && answers['L1-C'];
   const isLevel2Complete = level2Questions.every((q) => answers[q.id]);
   const isLevel3Complete = level3Questions.every((q) => answers[q.id]);
-
+  /**
+   * Renders the component corresponding to the current funnel step.
+   * A switch statement provides a clean way to manage the view transitions.
+   */
   const renderContent = () => {
     switch (step) {
       case 'start':
@@ -139,10 +162,10 @@ export function HomePage() {
         return <StartScreen onStart={() => setStep('level1')} />;
     }
   };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
+        {/* AnimatePresence handles the smooth transitions between funnel steps. */}
         <AnimatePresence mode="wait">
           <div key={step} className="w-full">
             {renderContent()}
@@ -152,4 +175,3 @@ export function HomePage() {
     </div>
   );
 }
-//
