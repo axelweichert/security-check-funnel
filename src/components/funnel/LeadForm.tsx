@@ -38,7 +38,7 @@ const formSchema = z.object({
   company: z.string().min(1, "Firmenname ist ein Pflichtfeld."),
   contact: z.string().min(1, "Ansprechpartner ist ein Pflichtfeld."),
   employeesRange: z.string().min(1, "Bitte wählen Sie die Mitarbeiterzahl."),
-  email: z.string().email("Bitte geben Sie eine g��ltige E-Mail-Adresse ein."),
+  email: z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein."),
   phone: z.string().min(1, "Telefonnummer ist ein Pflichtfeld."),
   role: z.string().optional(),
   notes: z.string().optional(),
