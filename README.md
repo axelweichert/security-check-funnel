@@ -29,7 +29,7 @@ This project uses npm as the recommended package manager for compatibility with 
 2. Clone the repo: `git clone <repository-url> && cd vonbusch-security-funnel`.
 3. Install dependencies: `npm install`. This will also generate a `package-lock.json` file which you should commit to your repository.
 4. Generate Cloudflare types (if needed): `npm run cf-typegen`.
-No additional configuration is required for local development. The project is pre-configured with Cloudflare Workers integration.
+No additional configuration is required for local development. The project is pre-configured with Cloudflare Workers integration and is 100% npm-compatible; no Bun required for dev/deploy/CI.
 ## Development
 - **Run Development Server**: `npm run dev` – Starts Vite dev server with hot reload at http://localhost:3000.
 - **Build for Production**: `npm run build` – Outputs to `dist/` for deployment.
@@ -81,83 +81,30 @@ Cloudflare Pages will automatically detect `package-lock.json` and use `npm` for
 **GitHub Codespaces**: To run this project in a Codespace, simply run `npm install` followed by `npm run dev`.
 **Custom Domain**: After deployment, add a custom domain in the Cloudflare dashboard. Ensure `wrangler.jsonc` assets config handles SPA routing.
 ## Production Deployment (Pages Static + Workers API)
-
 This project deploys the static frontend to **Cloudflare Pages** (with GitHub auto‑deploy) and the API/Worker separately to fully support Durable Objects.
-
 ### Why the Functions tab shows **„Keine Funktionen“** and `/api/leads` returns 404
-
-The project does **not** use Pages Functions (the `/functions` directory).  
-All API routes are handled by a full Cloudflare Worker, therefore the Functions tab remains empty and no Invoke URL is shown.
-
-### Deployment Steps
-
-1. **Deploy the API Worker**  
-   ```bash
-   wrangler login
-   npm run deploy
-   ```  
-   Note the generated `*.workers.dev` URL, e.g. `vonbusch-security-fu--x9nwvibdurmhz4zbbxdh.youraccount.workers.dev`.
-
-2. **Configure Pages to call the Worker**  
-   In the Cloudflare Pages dashboard go to **Project Settings → Environment variables** and add  
-   `VITE_API_URL` with the Worker URL from step 1.
-
-3. **Pages build settings**  
-   - **Framework preset**: `Vite`  
-   - **Build command**: `npm run build`  
-   - **Output directory**: `dist`  
-
-   Trigger a new deploy. The static site will be served from Pages and will call the Worker via `VITE_API_URL`.
-
-### Verify
-
-Open the browser console after submitting the lead form. The request URL should point to the Worker endpoint and no 404/abort errors should appear.
-
-### Alternative full‑stack deployment
-
-You can also deploy everything with a single `npm run deploy` to the Worker and bind a custom domain, which serves both the static assets and the API from one URL.
-
-> **Important:** Do **not** set the Pages `build.command` to `npm run deploy`. That command requires Wrangler authentication and will fail silently during the Pages build.
-
-## Production Deployment (Pages Static + Workers API)
-
-This project deploys the static frontend to **Cloudflare Pages** (with GitHub auto‑deploy) and the API/Worker separately to fully support Durable Objects.
-
-### Why the Functions tab shows **„Keine Funktionen“** and `/api/leads` returns 404
-
 The project does **not** use Pages Functions (the `/functions` directory).
 All API routes are handled by a full Cloudflare Worker, therefore the Functions tab remains empty and no Invoke URL is shown.
-
 ### Deployment Steps
-
 1. **Deploy the API Worker**
    ```bash
    wrangler login
    npm run deploy
    ```
    Note the generated `*.workers.dev` URL, e.g. `vonbusch-security-fu--x9nwvibdurmhz4zbbxdh.youraccount.workers.dev`.
-
 2. **Configure Pages to call the Worker**
    In the Cloudflare Pages dashboard go to **Project Settings → Environment variables** and add
    `VITE_API_URL` with the Worker URL from step 1.
-
 3. **Pages build settings**
    - **Framework preset**: `Vite`
    - **Build command**: `npm run build`
    - **Output directory**: `dist`
-
    Trigger a new deploy. The static site will be served from Pages and will call the Worker via `VITE_API_URL`.
-
 ### Verify
-
 Open the browser console after submitting the lead form. The request URL should point to the Worker endpoint and no 404/abort errors should appear.
-
 ### Alternative full‑stack deployment
-
 You can also deploy everything with a single `npm run deploy` to the Worker and bind a custom domain, which serves both the static assets and the API from one URL.
-
 > **Important:** Do **not** set the Pages `build.command` to `npm run deploy`. That command requires Wrangler authentication and will fail silently during the Pages build.
-
 ## GitHub Sync & Export (Fix for Button Fails)
 If you are experiencing issues with a direct "Export to GitHub" button, the most reliable method is to connect your repository directly through the Cloudflare Pages dashboard. This workflow avoids common authentication and repository naming conflicts.
 **Recommended Workflow (No Terminal Required):**
