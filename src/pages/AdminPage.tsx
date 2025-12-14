@@ -155,19 +155,63 @@ export function AdminPage() {
       toast.warning("No leads to export for the selected criteria.");
       return;
     }
-    const headers = "Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Firewall,VPN,AnswersJSON,Processed,Date\n";
+    // Define the question IDs that should be exported as separate columns
+    const questionIds = [
+      'L1-A', 'L1-B', 'L1-C',
+      'L2-A1', 'L2-A2',
+      'L2-B1', 'L2-B2',
+      'L2-C1',
+      'L3-A1', 'L3-A1-ALT',
+      'L3-B1',
+      'L3-C1',
+    ];
+    // Load German questions (the export is language‑independent, but the original spec uses 'de')
+    const questions = getQuestions('de');
+
+    // Build CSV header: base columns + one column per question ID + processed + date
+    const headers =
+      'Company,Contact,Email,Phone,Employees,Role,Notes,AreaA_Score,AreaB_Score,AreaC_Score,Average_Score,Discount_Consent,Firewall,VPN' +
+      questionIds.map(id => `,${id}-Antwort`).join('') +
+      ',Processed,Date\n';
+
     const csvRows = filteredLeads.map(l => {
-      const row = [
-        l.company, l.contact, l.email, l.phone, l.employeesRange, l.role, l.notes,
-        l.scoreSummary.areaA, l.scoreSummary.areaB, l.scoreSummary.areaC, l.scoreSummary.average.toFixed(2),
+      // Base columns (same as before, without the AnswersJSON column)
+      const baseCols = [
+        l.company,
+        l.contact,
+        l.email,
+        l.phone,
+        l.employeesRange,
+        l.role,
+        l.notes,
+        l.scoreSummary.areaA,
+        l.scoreSummary.areaB,
+        l.scoreSummary.areaC,
+        l.scoreSummary.average.toFixed(2),
         l.scoreSummary.rabattConsent ? 'Yes' : 'No',
         l.firewallProvider || '',
         l.vpnProvider || '',
-        JSON.stringify(l.scoreSummary.answers || {}),
+      ];
+
+      // Build answer columns: "question text – option text"
+      const answerCols = questionIds.map(qid => {
+        const answerId = (l.scoreSummary.answers || {})[qid];
+        const q = questions[qid as any];
+        const opt = q?.options?.find(o => o.id === answerId);
+        // If question or answer is missing, return empty string
+        if (!q) return '';
+        const answerText = opt?.text ? ` – ${opt.text}` : '';
+        return `${q.text}${answerText}`;
+      });
+
+      const extraCols = [
         l.processed ? 'Yes' : 'No',
         format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm')
       ];
-      return row.map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',');
+
+      const row = [...baseCols, ...answerCols, ...extraCols];
+      // Escape double quotes for CSV compliance
+      return row.map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',');
     });
     const csv = headers + csvRows.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
