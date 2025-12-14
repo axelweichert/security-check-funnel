@@ -31,32 +31,23 @@ const router = createBrowserRouter([
   },
 ]);
 const container = document.getElementById('root')!;
-let root: Root | null = null;
-function renderApp() {
-  const app = (
-    <StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <Layout>
-            <ErrorBoundary>
-              <Suspense fallback={<Skeleton className="h-screen w-screen rounded-none" />}>
-                <RouterProvider router={router} />
-              </Suspense>
-            </ErrorBoundary>
-          </Layout>
-        </QueryClientProvider>
-    </StrictMode>
-  );
-  if (import.meta.hot) {
-    // In development with HMR, reuse the root instance
-    root = (import.meta.hot.data.root ||= createRoot(container));
-  } else {
-    // In production, create a new root
-    if (!root) {
-      root = createRoot(container);
-    }
-  }
-  root.render(app);
+const root = createRoot(container);
+root.render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <Layout>
+        <ErrorBoundary>
+          <Suspense fallback={<Skeleton className="h-screen w-screen rounded-none" />}>
+            <RouterProvider router={router} />
+          </Suspense>
+        </ErrorBoundary>
+      </Layout>
+    </QueryClientProvider>
+  </StrictMode>
+);
+if (import.meta.hot) {
+  // Enable HMR for this entry point
+  import.meta.hot.accept();
 }
-renderApp();
 // Add a dummy export to satisfy the react-refresh/only-export-components lint rule for entry points.
 export {};
