@@ -4,7 +4,6 @@ import { UserEntity, ChatBoardEntity, LeadEntity } from "./entities";
 import { ok, bad, notFound, isStr } from "./core-utils";
 import { cors } from "hono/cors";
 import type { Lead } from "@shared/types";
-
 /**
  * Register API routes.
  * All routes are prefixed with /api/* and share a permissive CORS policy.
@@ -19,12 +18,10 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       allowHeaders: ["Content-Type"],
     })
   );
-
   // ---------------------------------------------------------------------------
   // Demo test endpoint
   // ---------------------------------------------------------------------------
   app.get("/api/test", (c) => c.json({ success: true, data: { name: "CF Workers Demo" } }));
-
   // ---------------------------------------------------------------------------
   // USER ENDPOINTS
   // ---------------------------------------------------------------------------
@@ -39,20 +36,17 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     );
     return ok(c, page);
   });
-
   app.post("/api/users", async (c) => {
     const { name } = (await c.req.json()) as { name?: string };
     if (!name?.trim()) return bad(c, "name required");
     const created = await UserEntity.create(c.env, { id: crypto.randomUUID(), name: name.trim() });
     return ok(c, created);
   });
-
   app.delete("/api/users/:id", async (c) => {
     const id = c.req.param("id");
     const deleted = await UserEntity.delete(c.env, id);
     return ok(c, { id, deleted });
   });
-
   app.post("/api/users/deleteMany", async (c) => {
     const { ids } = (await c.req.json()) as { ids?: string[] };
     const list = ids?.filter(isStr) ?? [];
@@ -60,7 +54,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const deletedCount = await UserEntity.deleteMany(c.env, list);
     return ok(c, { deletedCount, ids: list });
   });
-
   // ---------------------------------------------------------------------------
   // CHAT ENDPOINTS
   // ---------------------------------------------------------------------------
@@ -75,7 +68,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     );
     return ok(c, page);
   });
-
   app.post("/api/chats", async (c) => {
     const { title } = (await c.req.json()) as { title?: string };
     if (!title?.trim()) return bad(c, "title required");
@@ -86,14 +78,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     });
     return ok(c, { id: created.id, title: created.title });
   });
-
   app.get("/api/chats/:chatId/messages", async (c) => {
     const chatId = c.req.param("chatId");
     const chat = new ChatBoardEntity(c.env, chatId);
     if (!(await chat.exists())) return notFound(c, "chat not found");
     return ok(c, await chat.listMessages());
   });
-
   app.post("/api/chats/:chatId/messages", async (c) => {
     const chatId = c.req.param("chatId");
     const { userId, text } = (await c.req.json()) as { userId?: string; text?: string };
@@ -102,13 +92,11 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     if (!(await chat.exists())) return notFound(c, "chat not found");
     return ok(c, await chat.sendMessage(userId, text.trim()));
   });
-
   app.delete("/api/chats/:id", async (c) => {
     const id = c.req.param("id");
     const deleted = await ChatBoardEntity.delete(c.env, id);
     return ok(c, { id, deleted });
   });
-
   app.post("/api/chats/deleteMany", async (c) => {
     const { ids } = (await c.req.json()) as { ids?: string[] };
     const list = ids?.filter(isStr) ?? [];
@@ -116,16 +104,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const deletedCount = await ChatBoardEntity.deleteMany(c.env, list);
     return ok(c, { deletedCount, ids: list });
   });
-
-  /* 
   // ---------------------------------------------------------------------------
   // LEAD ENDPOINTS
   // ---------------------------------------------------------------------------
   // Create a new lead
   app.post("/api/leads", async (c) => {
+    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
     const body = (await c.req.json()) as Partial<Lead>;
     const { company, contact, employeesRange, phone, email, consent } = body;
-
     // Validate required fields
     if (
       !company?.trim() ||
@@ -137,7 +123,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     ) {
       return bad(c, "invalid lead data");
     }
-
     const newLead: Lead = {
       ...(body as Lead),
       id: crypto.randomUUID(),
@@ -150,15 +135,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       email: email.trim().toLowerCase(),
       consent: true,
       scoreSummary:
-        body.scoreSummary ?? LeadEntity.initialState?.scoreSummary ?? "",
+        body.scoreSummary ?? LeadEntity.initialState?.scoreSummary ?? { areaA: 0, areaB: 0, areaC: 0, average: 0 },
     };
-
     const created = await LeadEntity.create(c.env, newLead);
     return ok(c, created);
   });
-
   // List leads with pagination, newest first
   app.get("/api/leads", async (c) => {
+    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
     await LeadEntity.ensureSeed(c.env);
     const cursor = c.req.query("cursor");
     const limit = c.req.query("limit");
@@ -167,16 +151,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       cursor ?? null,
       limit ? Math.max(1, Number(limit) | 0) : undefined
     );
-
     const sortedItems = (page.items ?? []).slice().sort(
       (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)
     );
-
     return ok(c, { items: sortedItems, next: page.next });
   });
-
   // Update a lead (e.g., mark as processed)
   app.patch("/api/leads/:id", async (c) => {
+    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
     const id = c.req.param("id");
     const { processed } = (await c.req.json()) as { processed?: boolean };
     const lead = new LeadEntity(c.env, id);
@@ -184,13 +166,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     await lead.mutate((s) => ({ ...s, processed }));
     return ok(c, await lead.getState());
   });
-
   // Delete a lead
   app.delete("/api/leads/:id", async (c) => {
+    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
     const id = c.req.param("id");
     const deleted = await LeadEntity.delete(c.env, id);
     return ok(c, { deleted });
   });
-  */
 }
 //
