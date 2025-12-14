@@ -1,87 +1,57 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import PlausibleLoader from '@/components/PlausibleLoader';
 import { LangToggle } from '@/components/LangToggle';
 import { Toaster } from '@/components/ui/sonner';
 import { useTheme } from '@/hooks/use-theme';
 import { useCurrentLang } from '@/stores/useLangStore';
+
 interface LayoutProps {
   children: React.ReactNode;
   title?: string;
   description?: string;
 }
-declare global {
-  interface Window {
-    plausible?: (event: string, options?: { props: Record<string, any> }) => void;
-  }
-}
+
+/* Plausible global declaration removed – now handled inside PlausibleLoader */
+
 const defaultTitle = 'Security-Check in 3 Minuten by vonBusch';
 const defaultDescription = 'Stilvoller 3‑Schritt Security-Check (DE) mit Scoring, Ergebnis-Auswertung und Lead-Formular zur Beratungseinleitung.';
 const ogImageUrl = 'https://www.vonbusch.digital/images/og-image.png'; // Placeholder OG image URL
-export function Layout({ children, title = defaultTitle, description = defaultDescription }: LayoutProps) {
-  useTheme();
+
+export function Layout({
+  children,
+  title = defaultTitle,
+  description = defaultDescription,
+}: LayoutProps) {
+  const { isDark } = useTheme();
   const lang = useCurrentLang() ?? 'de';
-  const [analyticsConsent, setAnalyticsConsent] = useState(false);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
-  const loadPlausible = useCallback(() => {
-    const scriptId = 'plausible-analytics';
-    if (document.getElementById(scriptId) || scriptRef.current) {
-      return;
-    }
-    const newScript = document.createElement('script');
-    newScript.id = scriptId;
-    newScript.type = 'module';
-    newScript.async = true;
-    newScript.defer = true;
-    newScript.setAttribute('data-domain', 'check.vonbusch.digital');
-    newScript.src = 'https://plausible.io/js/script.js';
-    newScript.crossOrigin = 'anonymous';
-    newScript.onload = () => {
-      console.log('Plausible script loaded successfully.');
-      window.plausible?.('pageview');
-    };
-    newScript.onerror = () => {
-      // Fail silently and remove the script tag to prevent clutter.
-      scriptRef.current?.remove();
-      scriptRef.current = null;
-    };
-    scriptRef.current = newScript;
-    document.head.appendChild(newScript);
-  }, []);
+
+  /* Plausible state, script ref and loader removed – handled by PlausibleLoader component */
+
   useEffect(() => {
     // PWA Service Worker Registration (disabled in dev mode)
     if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
+        navigator.serviceWorker
+          .register('/sw.js', { scope: '/' })
+          .then(registration => {
+            console.log('SW registered: ', registration);
+          })
+          .catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
       });
     }
-    const checkConsent = () => {
-      setAnalyticsConsent(localStorage.getItem('analyticsConsent') === 'true');
-    };
-    checkConsent();
-    // Listen for changes from the lead form
-    window.addEventListener('analyticsConsentChanged', checkConsent);
-    const handleLeadSubmit = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (window.plausible) {
-        window.plausible('lead_submit', { props: customEvent.detail });
-      }
-    };
-    window.addEventListener('leadSubmit', handleLeadSubmit);
-    return () => {
-      window.removeEventListener('analyticsConsentChanged', checkConsent);
-      window.removeEventListener('leadSubmit', handleLeadSubmit);
-    };
+    // No Plausible consent handling here – moved to PlausibleLoader
   }, []);
+
   useEffect(() => {
     document.documentElement.lang = lang;
-    const finalTitle = title + ' | von Busch Security';
+    const finalTitle = `${title} | von Busch Security`;
     if (document.title !== finalTitle) {
       document.title = finalTitle;
     }
+
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -89,7 +59,8 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       document.head.appendChild(metaDescription);
     }
     metaDescription.setAttribute('content', description);
-    const metaTags = {
+
+    const metaTags: Record<string, string> = {
       'og:title': title,
       'og:description': description,
       'og:type': 'website',
@@ -99,6 +70,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       'twitter:description': description,
       'twitter:image': ogImageUrl,
     };
+
     Object.entries(metaTags).forEach(([property, content]) => {
       let meta = document.querySelector(`meta[property="${property}"]`);
       if (!meta) {
@@ -108,6 +80,7 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       }
       meta.setAttribute('content', content);
     });
+
     let favicon = document.querySelector('link[rel="icon"]');
     if (!favicon) {
       favicon = document.createElement('link');
@@ -117,20 +90,9 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
     favicon.setAttribute('href', 'https://vonbusch.digital/favicon.ico');
     favicon.setAttribute('type', 'image/x-icon');
   }, [title, description, lang]);
-  useEffect(() => {
-    const script = scriptRef.current;
-    if (analyticsConsent) {
-      if (!script) {
-        loadPlausible();
-      }
-    } else {
-      if (script) {
-        script.onerror = null; // Clean up error handler before removing
-        script.remove();
-        scriptRef.current = null;
-      }
-    }
-  }, [analyticsConsent, loadPlausible]);
+
+  /* Effect for loading/removing Plausible script removed – handled by PlausibleLoader */
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased relative">
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-slate-950 dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)]">
@@ -138,10 +100,10 @@ export function Layout({ children, title = defaultTitle, description = defaultDe
       </div>
       <ThemeToggle className="fixed top-4 right-4 z-50" />
       <LangToggle className="fixed top-4 right-16 z-50" />
-      <main>
-        {children}
-      </main>
-      <Toaster richColors closeButton />
+      <PlausibleLoader />
+      <main>{children}</main>
+      <Toaster theme={isDark ? 'dark' : 'light'} richColors closeButton />
     </div>
   );
 }
+//
