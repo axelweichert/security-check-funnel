@@ -5,9 +5,8 @@ export async function api<T = unknown>(path: string, init?: RequestInit): Promis
     baseUrl = 'http://localhost:3000';
   }
   const res = await fetch(`${baseUrl}${path}`, {
-    headers: { 
-      'Content-Type': 'application/json',
-      'Origin': '*' // Add Origin header for CORS
+    headers: {
+      'Content-Type': 'application/json'
     },
     ...(init ?? {})
   });

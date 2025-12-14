@@ -35,26 +35,14 @@ import type { AnswersState } from "@/lib/funnel";
 import { downloadReport } from "@/lib/reportGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const formSchema = z.object({
-  company: z.preprocess(
-    (val) => String(val ?? '').trim(),
-    z.string().min(1, "Firmenname ist ein Pflichtfeld.")
-  ),
-  contact: z.preprocess(
-    (val) => String(val ?? '').trim(),
-    z.string().min(1, "Ansprechpartner ist ein Pflichtfeld.")
-  ),
-  employeesRange: z.preprocess(
-    (val) => String(val ?? '').trim(),
-    z.string().min(1, "Bitte wählen Sie die Mitarbeiterzahl.")
-  ),
-  email: z.preprocess(
-    (val) => String(val ?? '').trim().toLowerCase(),
-    z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein.")
-  ),
-  phone: z.preprocess(
-    (val) => String(val ?? '').trim(),
-    z.string().min(1, "Telefonnummer ist ein Pflichtfeld.")
-  ),
+  company: z.string().trim().min(1, "Firmenname ist ein Pflichtfeld."),
+  contact: z.string().trim().min(1, "Ansprechpartner ist ein Pflichtfeld."),
+  employeesRange: z.string().trim().min(1, "Bitte wählen Sie die Mitarbeiterzahl."),
+  phone: z.string().trim().min(1, "Telefonnummer ist ein Pflichtfeld."),
+  email: z
+    .string()
+    .transform((v) => v.trim().toLowerCase())
+    .pipe(z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein.")),
   role: z.string().optional(),
   notes: z.string().optional(),
   firewallProvider: z.string().optional(),
