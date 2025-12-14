@@ -57,27 +57,38 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const body = await c.req.json<Partial<Lead>>();
     console.log('[LEADS POST] body received:', body);
     // ---- Validation ----
-    if (!isStr(body.company)) return bad(c, 'Valid company required.');
-    if (!isStr(body.contact)) return bad(c, 'Valid contact required.');
-    if (!isStr(body.email)) return bad(c, 'Valid email required.');
-    if (!isStr(body.phone)) return bad(c, 'Valid phone required.');
+    const companyTrim = (body.company ?? '').trim();
+    if (!companyTrim) return bad(c, 'Firmenname erforderlich.');
+    const contactTrim = (body.contact ?? '').trim();
+    if (!contactTrim) return bad(c, 'Ansprechpartner erforderlich.');
+    const emailTrim = (body.email ?? '').trim().toLowerCase();
+    if (!emailTrim || !emailTrim.includes('@') || !emailTrim.includes('.')) return bad(c, 'Gültige E-Mail erforderlich.');
+    const phoneTrim = (body.phone ?? '').trim();
+    if (!phoneTrim) return bad(c, 'Telefonnummer erforderlich.');
     if (body.consent !== true) return bad(c, 'Consent must be true.');
+    const firewallTrim = (body.firewallProvider ?? '').trim();
+    if (body.firewallProvider && !firewallTrim) return bad(c, 'Firewall-Anbieter ungültig.');
+    const vpnTrim = (body.vpnProvider ?? '').trim();
+    if (body.vpnProvider && !vpnTrim) return bad(c, 'VPN-Anbieter ungültig.');
+    const roleTrim = (body.role ?? '').trim();
+    const notesTrim = (body.notes ?? '').trim();
+    const employeesRangeTrim = (body.employeesRange ?? '').trim() || 'N/A';
     const scoreSummary = body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 };
     scoreSummary.rabattConsent = !!scoreSummary.rabattConsent;
     const newLead: Lead = {
       id: crypto.randomUUID(),
       createdAt: Date.now(),
-      company: body.company,
-      contact: body.contact,
-      employeesRange: body.employeesRange || 'N/A',
-      email: body.email,
-      phone: body.phone,
-      role: body.role,
-      notes: body.notes,
+      company: companyTrim,
+      contact: contactTrim,
+      employeesRange: employeesRangeTrim,
+      email: emailTrim,
+      phone: phoneTrim,
+      role: roleTrim,
+      notes: notesTrim,
       consent: body.consent,
       processed: false,
-      firewallProvider: body.firewallProvider?.trim() || '',
-      vpnProvider: body.vpnProvider?.trim() || '',
+      firewallProvider: firewallTrim,
+      vpnProvider: vpnTrim,
       scoreSummary: scoreSummary,
     };
     // ---- Lead creation & CRM webhook ----
