@@ -103,119 +103,13 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // ---------------------------------------------------------------------------
   // LEAD ENDPOINTS
   // ---------------------------------------------------------------------------
-  // CREATE LEAD
-  app.post("/api/leads", async (c) => {
-    console.log("[LEADS POST] route hit");
-    const body = await c.req.json<Partial<Lead>>();
-    console.log("[LEADS POST] body received:", body);
-    // ---- Validation ----
-    const company = (body.company ?? "").trim();
-    if (!company) return bad(c, "Firmenname erforderlich.");
-    const contact = (body.contact ?? "").trim();
-    if (!contact) return bad(c, "Ansprechpartner erforderlich.");
-    const email = (body.email ?? "").trim().toLowerCase();
-    if (!email || !email.includes("@") || !email.includes(".")) return bad(c, "Gültige E-Mail erforderlich.");
-    const phone = (body.phone ?? "").trim();
-    if (!phone) return bad(c, "Telefonnummer erforderlich.");
-    if (body.consent !== true) return bad(c, "Consent must be true.");
-    const firewall = (body.firewallProvider ?? "").trim();
-    if (body.firewallProvider && !firewall) return bad(c, "Firewall-Anbieter ungültig.");
-    const vpn = (body.vpnProvider ?? "").trim();
-    if (body.vpnProvider && !vpn) return bad(c, "VPN-Anbieter ungültig.");
-    const role = (body.role ?? "").trim();
-    const notes = (body.notes ?? "").trim();
-    const employeesRange = (body.employeesRange ?? "").trim() || "N/A";
-    const scoreSummary = body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 };
-    scoreSummary.answers = body.scoreSummary?.answers || {};
-    scoreSummary.rabattConsent = !!scoreSummary.rabattConsent;
-    const newLead: Lead = {
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      company,
-      contact,
-      employeesRange,
-      email,
-      phone,
-      role,
-      notes,
-      consent: body.consent,
-      processed: false,
-      firewallProvider: firewall,
-      vpnProvider: vpn,
-      scoreSummary,
-    };
-    let createdLead: Lead;
-    try {
-      createdLead = await LeadEntity.create(c.env, newLead);
-      console.log("[LEADS POST] created:", createdLead.id);
-      // Optional webhook notification
-      const webhookUrl = "https://webhook.site/a7e7e1c3-a4e1-4b8a-8c3e-07a8b3d64d2c";
-      fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(createdLead),
-      })
-        .then(() => console.log("[LEADS WEBHOOK] sent for", createdLead.id))
-        .catch((e) => console.error("[LEADS WEBHOOK] error", e));
-    } catch (e) {
-      console.error("[LEADS FAIL]", e);
-      return bad(c, `Lead creation failed: ${(e as Error).message}`);
-    }
-    return ok(c, createdLead);
-  });
-  // LIST LEADS (paginated)
-  app.get("/api/leads", async (c) => {
-    console.log("[LEADS GET] route hit");
-    try {
-      await LeadEntity.ensureSeed(c.env);
-    } catch (e) {
-      console.error("[LEADS GET ensureSeed error]:", e);
-      return bad(c, `Seed error: ${(e as Error).message}`);
-    }
-    const cursorParam = c.req.query("cursor") || null;
-    const limitParam = c.req.query("limit");
-    const limit = limitParam ? Math.max(1, Number(limitParam) || 25) : 25;
-    // ---- Cursor validation ----
-    if (cursorParam !== null) {
-      if (
-        !cursorParam.startsWith("i:") ||
-        cursorParam.length !== 38 ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cursorParam.slice(2))
-      ) {
-        console.log("[LEADS GET invalid cursor]:", cursorParam);
-        return bad(c, "Invalid cursor format");
-      }
-    }
-    console.log("[LEADS GET] cursor:", cursorParam, "limit:", limit);
-    let page;
-    try {
-      page = await LeadEntity.list(c.env, cursorParam, limit);
-      console.log("[LEADS GET] result count:", page.items.length);
-    } catch (e) {
-      console.error("[LEADS GET list error]:", e);
-      return bad(c, `List error: ${(e as Error).message}`);
-    }
-    return ok(c, page);
-  });
-  // UPDATE LEAD (processed flag)
-  app.patch("/api/leads/:id", async (c) => {
-    const id = c.req.param("id");
-    const body = await c.req.json<{ processed: boolean }>();
-    const lead = new LeadEntity(c.env, id);
-    if (!(await lead.exists())) {
-      return notFound(c);
-    }
-    const { processed } = body;
-    if (typeof processed !== "boolean") {
-      return bad(c, "processed field must be a boolean");
-    }
-    await lead.patch({ processed });
-    return ok(c, await lead.getState());
-  });
-  // DELETE LEAD
-  app.delete("/api/leads/:id", async (c) => {
-    const id = c.req.param("id");
-    const deleted = await LeadEntity.delete(c.env, id);
-    return ok(c, { deleted });
-  });
+  /*
+   * DEPRECATED (migrated to Pages Functions + KV):
+   * Leads are now handled in /functions/api/leads/index.ts (KV backend)
+   * The following routes are kept for reference but are no longer active.
+   */
+  // app.post("/api/leads", ...);
+  // app.get("/api/leads", ...);
+  // app.patch("/api/leads/:id", ...);
+  // app.delete("/api/leads/:id", ...);
 }

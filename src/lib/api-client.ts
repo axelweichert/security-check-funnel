@@ -1,4 +1,6 @@
 import { ApiResponse } from "../../shared/types"
+
+// This client is compatible with both local Vite proxy and Cloudflare Pages Functions.
 export async function api<T = unknown>(path: string, init?: RequestInit): Promise<T> {
 let baseUrl = '';
 if (import.meta.env.VITE_API_URL) {

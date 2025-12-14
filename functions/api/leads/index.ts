@@ -1,134 +1,119 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { z } from 'zod';
 import type { Lead } from '../../../shared/types';
-// Define the environment interface for Pages Functions
 interface Env {
-  LEADS_KV: KVNamespace;
+  Bindings: {
+    KV_LEADS: KVNamespace;
+  };
 }
-// Define a minimal context for Hono to work with Pages Functions
-type HonoContext = {
-  Bindings: Env;
-};
-const app = new Hono<HonoContext>();
-// Apply CORS middleware to all routes
-app.use('*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-}));
-// Zod schema for basic lead validation on creation
-const createLeadSchema = z.object({
-  company: z.string().trim().min(1),
-  contact: z.string().trim().min(1),
-  employeesRange: z.string().trim().min(1),
-  phone: z.string().trim().min(1),
-  email: z.string().trim().toLowerCase().email(),
-  consent: z.literal(true),
-  scoreSummary: z.object({
-    areaA: z.number(),
-    areaB: z.number(),
-    areaC: z.number(),
-    average: z.number(),
-    rabattConsent: z.boolean().optional(),
-    answers: z.record(z.string()).optional(),
-  }),
-  role: z.string().optional(),
-  notes: z.string().optional(),
-  firewallProvider: z.string().optional(),
-  vpnProvider: z.string().optional(),
-});
-// Helper for successful JSON responses
-const ok = <T>(data: T) => new Response(JSON.stringify({ success: true, data }), {
-  headers: { 'Content-Type': 'application/json' },
-});
-// Helper for error JSON responses
-const bad = (error: string, status = 400) => new Response(JSON.stringify({ success: false, error }), {
-  status,
-  headers: { 'Content-Type': 'application/json' },
-});
-// POST /api/leads - Create a new lead
+const app = new Hono<Env>();
+app.use(
+  '/*',
+  cors({
+    origin: '*',
+    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowHeaders: ['Content-Type'],
+  })
+);
+// CREATE LEAD
 app.post('/', async (c) => {
-  console.log('[PAGES FUNCTIONS LEADS POST]');
+  console.log('[KV-LEADS POST] route hit');
+  let body: Partial<Lead>;
   try {
-    const body = await c.req.json();
-    const validation = createLeadSchema.safeParse(body);
-    if (!validation.success) {
-      return bad(`Invalid lead data: ${validation.error.flatten().fieldErrors}`, 400);
-    }
-    const newLead: Lead = {
-      ...validation.data,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      processed: false,
-    };
-    await c.env.LEADS_KV.put(`lead:${newLead.id}`, JSON.stringify(newLead));
-    return ok(newLead);
-  } catch (e: any) {
-    console.error('[LEADS POST ERROR]', e.message);
-    return bad('Failed to create lead', 500);
+    body = await c.req.json<Partial<Lead>>();
+  } catch (e) {
+    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
+  }
+  // Basic validation
+  if (!body.company?.trim()) return c.json({ success: false, error: 'Firmenname erforderlich.' }, 400);
+  if (!body.contact?.trim()) return c.json({ success: false, error: 'Ansprechpartner erforderlich.' }, 400);
+  if (!body.email?.trim() || !body.email.includes('@')) return c.json({ success: false, error: 'Gültige E-Mail erforderlich.' }, 400);
+  if (!body.phone?.trim()) return c.json({ success: false, error: 'Telefonnummer erforderlich.' }, 400);
+  if (body.consent !== true) return c.json({ success: false, error: 'Consent must be true.' }, 400);
+  const newLead: Lead = {
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
+    company: (body.company ?? '').trim(),
+    contact: (body.contact ?? '').trim(),
+    employeesRange: (body.employeesRange ?? '').trim() || 'N/A',
+    email: (body.email ?? '').trim().toLowerCase(),
+    phone: (body.phone ?? '').trim(),
+    role: (body.role ?? '').trim(),
+    notes: (body.notes ?? '').trim(),
+    consent: body.consent,
+    processed: false,
+    firewallProvider: (body.firewallProvider ?? '').trim(),
+    vpnProvider: (body.vpnProvider ?? '').trim(),
+    scoreSummary: body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 },
+  };
+  try {
+    await c.env.KV_LEADS.put(`lead:${newLead.id}`, JSON.stringify(newLead));
+    console.log('[KV-LEADS POST] created:', newLead.id);
+    return c.json({ success: true, data: newLead });
+  } catch (e) {
+    console.error('[KV-LEADS FAIL]', e);
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    return c.json({ success: false, error: `Lead creation failed: ${errorMessage}` }, 500);
   }
 });
-// GET /api/leads - List leads with pagination
+// LIST LEADS (paginated)
 app.get('/', async (c) => {
-  console.log('[PAGES FUNCTIONS LEADS GET]');
+  console.log('[KV-LEADS GET] route hit');
+  const limit = parseInt(c.req.query('limit') || '10', 10);
+  const cursor = c.req.query('cursor') || undefined;
   try {
-    const limit = parseInt(c.req.query('limit') || '10', 10);
-    const cursor = c.req.query('cursor');
-    const listResult = await c.env.LEADS_KV.list({
-      prefix: 'lead:',
-      limit,
-      cursor,
+    const listResult = await c.env.KV_LEADS.list({ prefix: 'lead:', limit, cursor });
+    const keys = listResult.keys.map((key) => key.name);
+    const kvPromises = keys.map((key) => c.env.KV_LEADS.get<Lead>(key, 'json'));
+    const values = await Promise.all(kvPromises);
+    const items = values.filter((value): value is Lead => value !== null).sort((a, b) => b.createdAt - a.createdAt);
+    console.log('[KV-LEADS GET] result count:', items.length);
+    return c.json({
+      success: true,
+      data: {
+        items,
+        next: listResult.list_complete ? null : listResult.cursor,
+      },
     });
-    const leadPromises = listResult.keys.map(key => c.env.LEADS_KV.get<Lead>(key.name, 'json'));
-    const leads = (await Promise.all(leadPromises)).filter((lead): lead is Lead => lead !== null);
-    // Sort by creation date descending, as KV list is lexicographical
-    const sortedLeads = leads.sort((a, b) => b.createdAt - a.createdAt);
-    return ok({
-      items: sortedLeads,
-      next: listResult.list_complete ? null : listResult.cursor,
-    });
-  } catch (e: any) {
-    console.error('[LEADS GET ERROR]', e.message);
-    return bad('Failed to fetch leads', 500);
+  } catch (e) {
+    console.error('[KV-LEADS GET list error]:', e);
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    return c.json({ success: false, error: `List error: ${errorMessage}` }, 500);
   }
 });
-// PATCH /api/leads/:id - Update a lead (e.g., mark as processed)
+// UPDATE LEAD (processed flag)
 app.patch('/:id', async (c) => {
   const id = c.req.param('id');
-  console.log(`[PAGES FUNCTIONS LEADS PATCH] ID: ${id}`);
+  const key = `lead:${id}`;
   try {
-    const { processed } = await c.req.json<{ processed?: boolean }>();
-    if (typeof processed !== 'boolean') {
-      return bad('Invalid "processed" field', 400);
-    }
-    const key = `lead:${id}`;
-    const existingLead = await c.env.LEADS_KV.get<Lead>(key, 'json');
+    const existingLead = await c.env.KV_LEADS.get<Lead>(key, 'json');
     if (!existingLead) {
-      return bad('Lead not found', 404);
+      return c.json({ success: false, error: 'Not Found' }, 404);
     }
-    const updatedLead: Lead = { ...existingLead, processed };
-    await c.env.LEADS_KV.put(key, JSON.stringify(updatedLead));
-    return ok(updatedLead);
-  } catch (e: any) {
-    console.error(`[LEADS PATCH ERROR] ID: ${id}`, e.message);
-    return bad('Failed to update lead', 500);
+    const body = await c.req.json<{ processed: boolean }>();
+    if (typeof body.processed !== 'boolean') {
+      return c.json({ success: false, error: 'processed field must be a boolean' }, 400);
+    }
+    const updatedLead: Lead = { ...existingLead, processed: body.processed };
+    await c.env.KV_LEADS.put(key, JSON.stringify(updatedLead));
+    return c.json({ success: true, data: updatedLead });
+  } catch (e) {
+    console.error(`[KV-LEADS PATCH /:id] error for id ${id}:`, e);
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    return c.json({ success: false, error: `Update failed: ${errorMessage}` }, 500);
   }
 });
-// DELETE /api/leads/:id - Delete a lead
+// DELETE LEAD
 app.delete('/:id', async (c) => {
   const id = c.req.param('id');
-  console.log(`[PAGES FUNCTIONS LEADS DELETE] ID: ${id}`);
+  const key = `lead:${id}`;
   try {
-    const key = `lead:${id}`;
-    await c.env.LEADS_KV.delete(key);
-    return ok({ deleted: true });
-  } catch (e: any) {
-    console.error(`[LEADS DELETE ERROR] ID: ${id}`, e.message);
-    return bad('Failed to delete lead', 500);
+    await c.env.KV_LEADS.delete(key);
+    return c.json({ success: true, data: { deleted: true } });
+  } catch (e) {
+    console.error(`[KV-LEADS DELETE /:id] error for id ${id}:`, e);
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    return c.json({ success: false, error: `Delete failed: ${errorMessage}` }, 500);
   }
 });
-// The `onRequest` handler is the entry point for Pages Functions.
-export const onRequest: PagesFunction<Env> = async (context) => {
-  return app.fetch(context.request, context.env, context);
-};
+export const onRequest = app.fetch;
