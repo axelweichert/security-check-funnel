@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Language } from '@/lib/i18n';
-
-
 interface LangState {
   lang: Language;
   toggleLang: () => void;
@@ -24,11 +22,10 @@ export const useLangStore = create<LangState>()(
     }
   )
 );
-
 // HMR compatibility: clear persisted storage on module dispose
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-useLangStore.persist?.clearStorage?.();
+    useLangStore.persist?.clearStorage?.();
   });
 }
 // Primitive selector hooks to prevent unnecessary re-renders and stabilize usage
