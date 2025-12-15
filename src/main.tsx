@@ -1,7 +1,7 @@
 import '@/lib/errorReporter';
 import { enableMapSet } from "immer";
 enableMapSet();
-import { StrictMode, Suspense, lazy } from 'react'
+import { StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import {
   createBrowserRouter,
@@ -13,22 +13,18 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { Layout } from '@/components/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
-const HomePage = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.HomePage })));
-const AdminPage = lazy(() => import('@/pages/AdminPage').then(module => ({ default: module.AdminPage })));
+import { HomePage } from '@/pages/HomePage';
+import { AdminPage } from '@/pages/AdminPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
-  {
+{
     path: "/",
     element: <HomePage />,
-    loader: async () => null,
-    errorElement: <RouteErrorBoundary />,
-  },
-  {
+},
+{
     path: "/admin",
     element: <AdminPage />,
-    loader: async () => null,
-    errorElement: <RouteErrorBoundary />,
-  },
+},
 ]);
 const container = document.getElementById('root')!;
 let root: Root | null = null;
@@ -50,9 +46,7 @@ root.render(
     <QueryClientProvider client={queryClient}>
       <Layout>
         <ErrorBoundary>
-          <Suspense fallback={<Skeleton className="h-screen w-screen rounded-none" />}>
-            <RouterProvider router={router} />
-          </Suspense>
+<RouterProvider router={router} />
         </ErrorBoundary>
       </Layout>
     </QueryClientProvider>
