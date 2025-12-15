@@ -28,8 +28,7 @@ export const useLangStore = create<LangState>()(
 // HMR compatibility: clear persisted storage on module dispose
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    // @ts-expect-error – `persist` may be undefined in non-persisted builds
-    useLangStore.persist?.clearStorage?.();
+useLangStore.persist?.clearStorage?.();
   });
 }
 // Primitive selector hooks to prevent unnecessary re-renders and stabilize usage
