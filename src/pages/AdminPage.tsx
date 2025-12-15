@@ -259,7 +259,16 @@ export function AdminPage() {
                             <TableCell>
                               <div className="flex flex-col">
                                 <span>{lead.contact}</span>
-                                <a href={`mailto:${lead.email}`} className="text-xs text-muted-foreground hover:underline">{lead.email}</a>
+                                {lead.email && lead.email.includes('@') ? (
+  <a
+    href={`mailto:${encodeURIComponent(lead.email)}`}
+    className="text-xs text-muted-foreground hover:underline"
+  >
+    {lead.email}
+  </a>
+) : (
+  <span className="text-xs text-muted-foreground">{lead.email || '–'}</span>
+)}
                                 <span className="text-xs text-muted-foreground">{lead.phone}</span>
                               </div>
                             </TableCell>

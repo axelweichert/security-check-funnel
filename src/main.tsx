@@ -26,7 +26,7 @@ const router = createBrowserRouter([
     element: <AdminPage />,
     errorElement: <RouteErrorBoundary />,
   },
-]);
+], { basename: '/' });
 const container = document.getElementById('root');
 let root: Root | null = null;
 function renderApp() {
