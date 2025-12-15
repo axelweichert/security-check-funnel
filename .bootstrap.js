@@ -82,7 +82,8 @@ function runSetupCommands() {
     "bun remove framer-motion react-day-picker",
     "bun add framer-motion@^11.11.9",
     "bun add framer-motion@11.11.8",
-    "bun add framer-motion@10.18.0"
+    "bun add framer-motion@10.18.0",
+    "bun add react-day-picker@8.10.1"
 ];
     
     if (commands.length === 0) {
