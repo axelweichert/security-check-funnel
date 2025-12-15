@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Language } from '@/lib/i18n';
+import { useShallow } from 'zustand/react/shallow';
 interface LangState {
   lang: Language;
   toggleLang: () => void;
@@ -22,6 +23,7 @@ export const useLangStore = create<LangState>()(
     }
   )
 );
-// Primitive selector hooks to prevent unnecessary re-renders
-export const useCurrentLang = () => useLangStore((state) => state.lang);
+// Primitive selector hooks to prevent unnecessary re-renders and stabilize usage
+export const useCurrentLang = () => useLangStore(useShallow((state) => state.lang));
 export const useToggleLang = () => useLangStore((state) => state.toggleLang);
+export const useSetLang = () => useLangStore((state) => state.setLang);
