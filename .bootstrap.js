@@ -79,7 +79,7 @@ function updateWranglerJsonc() {
 function runSetupCommands() {
     const commands = [
     "bun install jspdf html2canvas",
-    "bun remove framer-motion react-day-picker",
+    "bun remove framer-motion",
     "bun add framer-motion@^11.11.9",
     "bun add framer-motion@11.11.8",
     "bun add framer-motion@10.18.0 react-day-picker@8.10.1",
