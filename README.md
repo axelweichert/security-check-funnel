@@ -1,5 +1,5 @@
 # vonbusch-security-funnel
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/axelweichert/security-check-funnel)
 A stylish 3-step Security Check funnel (in German and English) with scoring, results evaluation, and lead form to initiate consultations. This is a high-quality, multilingual sales tunnel website (single-page flow) for von Busch GmbH, aimed at generating qualified B2B leads in the DACH market. The goal is to provide an automated, point-based assessment of security maturity (VPN / Web / Awareness) within 2–3 minutes through three stages (Basic → Detail → Maturity Level). Results include per-area traffic light ratings, overall assessment, and a lead form. The interface is mobile-first, visually premium (gradient hero, subtle shadows, micro-interactions), and built using shadcn/ui components, Tailwind v3 utilities, and a Cloudflare Worker backend with Durable Objects.
 ## Features
 - **Interactive 3-Step Funnel**: Basis-Check (3 mandatory questions on VPN, Web processes, and awareness), conditional Detail-Check, and Maturity/Risk assessment.
