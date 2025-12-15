@@ -80,7 +80,8 @@ function runSetupCommands() {
     const commands = [
     "bun install jspdf html2canvas",
     "bun remove framer-motion",
-    "bun add framer-motion@^11.11.9"
+    "bun add framer-motion@^11.11.9",
+    "bun add framer-motion@11.11.8 react-day-picker@8.10.1"
 ];
     
     if (commands.length === 0) {
