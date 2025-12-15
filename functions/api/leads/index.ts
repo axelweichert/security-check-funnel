@@ -2,264 +2,133 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { z } from 'zod';
 import type { Lead } from '../../../shared/types';
-
+// Define the environment interface for Pages Functions
 interface Env {
-  Bindings: {
-    KV_LEADS: KVNamespace;
-  };
+  LEADS_KV: KVNamespace;
 }
-
-const app = new Hono<Env>();
-
-// ---------------------------------------------------------------------------
-// Validation schemas (Zod)
-// ---------------------------------------------------------------------------
-
-// Schema for POST / (lead creation)
-const LeadPostSchema = z.object({
-  company: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string().min(1, 'Firmenname ist ein Pflichtfeld.')
-  ),
-  contact: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string().min(1, 'Ansprechpartner ist ein Pflichtfeld.')
-  ),
-  employeesRange: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string().min(1, 'Mitarbeiterzahl ist erforderlich.')
-  ),
-  phone: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string().min(1, 'Telefonnummer ist ein Pflichtfeld.')
-  ),
-  email: z.preprocess(
-    (v) => (typeof v === 'string' ? v.toLowerCase().trim() : ''),
-    z.string().email('Gültige E-Mail-Adresse erforderlich.')
-  ),
-  role: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string()
-  ).optional(),
-  notes: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string()
-  ).optional(),
-  firewallProvider: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string()
-  ).optional(),
-  vpnProvider: z.preprocess(
-    (v) => (typeof v === 'string' ? v.trim() : ''),
-    z.string()
-  ).optional(),
-  consent: z.literal(true, {
-    errorMap: () => ({ message: 'Kontaktaufnahme muss zugestimmt werden.' })
+// Define a minimal context for Hono to work with Pages Functions
+type HonoContext = {
+  Bindings: Env;
+};
+const app = new Hono<HonoContext>();
+// Apply CORS middleware to all routes
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+}));
+// Zod schema for basic lead validation on creation
+const createLeadSchema = z.object({
+  company: z.string().trim().min(1),
+  contact: z.string().trim().min(1),
+  employeesRange: z.string().trim().min(1),
+  phone: z.string().trim().min(1),
+  email: z.string().trim().toLowerCase().email(),
+  consent: z.literal(true),
+  scoreSummary: z.object({
+    areaA: z.number(),
+    areaB: z.number(),
+    areaC: z.number(),
+    average: z.number(),
+    rabattConsent: z.boolean().optional(),
+    answers: z.record(z.string()).optional(),
   }),
-  scoreSummary: z
-    .object({
-      areaA: z.number().min(0).max(100),
-      areaB: z.number().min(0).max(100),
-      areaC: z.number().min(0).max(100),
-      average: z.number().min(0).max(100),
-      answers: z.record(z.string()).optional(),
-      rabattConsent: z.boolean().optional(),
-    })
-    .optional(),
-}).strict();
-
-// Schema for PATCH /:id (processed flag update)
-const PatchSchema = z.object({
-  processed: z.boolean(),
+  role: z.string().optional(),
+  notes: z.string().optional(),
+  firewallProvider: z.string().optional(),
+  vpnProvider: z.string().optional(),
 });
-
-app.use(
-  '/*',
-  cors({
-    origin: '*',
-    allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowHeaders: ['Content-Type'],
-  })
-);
-
-// Global error handler for all routes
-app.onError((err, c) => {
-  console.error(
-    '[HONO KV-LEADS ERROR]',
-    err instanceof Error ? err.message : err,
-    c.req.method,
-    c.req.url
-  );
-  return c.json(
-    {
-      success: false,
-      error: err instanceof Error ? err.message : 'Internal server error',
-    },
-    500
-  );
+// Helper for successful JSON responses
+const ok = <T>(data: T) => new Response(JSON.stringify({ success: true, data }), {
+  headers: { 'Content-Type': 'application/json' },
 });
-
-// CREATE LEAD
+// Helper for error JSON responses
+const bad = (error: string, status = 400) => new Response(JSON.stringify({ success: false, error }), {
+  status,
+  headers: { 'Content-Type': 'application/json' },
+});
+// POST /api/leads - Create a new lead
 app.post('/', async (c) => {
-  console.log('[KV-LEADS POST] route hit');
-  if (!c.env?.KV_LEADS) {
-    console.log('[KV_LEADS MISSING - POST]');
-    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
-  }
-
-  // Parse raw JSON body
-  const rawBody = await c.req.text();
-  let parsedBody: unknown;
+  console.log('[PAGES FUNCTIONS LEADS POST]');
   try {
-    parsedBody = JSON.parse(rawBody);
-  } catch {
-    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-  }
-
-  // Validate with Zod schema
-  const parseResult = LeadPostSchema.safeParse(parsedBody);
-  if (!parseResult.success) {
-    const errMsg = parseResult.error.errors[0]?.message ?? 'Validation failed';
-    return c.json({ success: false, error: errMsg }, 400);
-  }
-  const body = parseResult.data;
-
-  // Build Lead object – Zod already performed trimming/normalisation
-  const newLead: Lead = {
-    id: crypto.randomUUID(),
-    createdAt: Date.now(),
-    company: body.company,
-    contact: body.contact,
-    employeesRange: body.employeesRange ?? 'N/A',
-    email: body.email,
-    phone: body.phone,
-    role: body.role ?? '',
-    notes: body.notes ?? '',
-    consent: body.consent,
-    processed: false,
-    firewallProvider: body.firewallProvider ?? '',
-    vpnProvider: body.vpnProvider ?? '',
-    scoreSummary:
-      body.scoreSummary || { areaA: 0, areaB: 0, areaC: 0, average: 0 },
-  };
-
-  try {
-    await c.env.KV_LEADS.put(`lead:${newLead.id}`, JSON.stringify(newLead));
-    console.log('[KV-LEADS POST] created:', newLead.id);
-    return c.json({ success: true, data: newLead });
-  } catch (e) {
-    console.error('[KV-LEADS FAIL]', e);
-    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-    return c.json(
-      { success: false, error: `Lead creation failed: ${errorMessage}` },
-      500
-    );
+    const body = await c.req.json();
+    const validation = createLeadSchema.safeParse(body);
+    if (!validation.success) {
+      return bad(`Invalid lead data: ${validation.error.flatten().fieldErrors}`, 400);
+    }
+    const newLead: Lead = {
+      ...validation.data,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      processed: false,
+    };
+    await c.env.LEADS_KV.put(`lead:${newLead.id}`, JSON.stringify(newLead));
+    return ok(newLead);
+  } catch (e: any) {
+    console.error('[LEADS POST ERROR]', e.message);
+    return bad('Failed to create lead', 500);
   }
 });
-
-// LIST LEADS (paginated)
+// GET /api/leads - List leads with pagination
 app.get('/', async (c) => {
-  console.log('[KV-LEADS GET] route hit');
-  if (!c.env?.KV_LEADS) {
-    console.log('[KV_LEADS MISSING - GET]');
-    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
-  }
-  const limit = parseInt(c.req.query('limit') || '10', 10);
-  const cursor = c.req.query('cursor') || undefined;
+  console.log('[PAGES FUNCTIONS LEADS GET]');
   try {
-    const listResult = await c.env.KV_LEADS.list({
+    const limit = parseInt(c.req.query('limit') || '10', 10);
+    const cursor = c.req.query('cursor');
+    const listResult = await c.env.LEADS_KV.list({
       prefix: 'lead:',
       limit,
       cursor,
     });
-    const keys = listResult.keys.map((key) => key.name);
-    const kvPromises = keys.map((key) => c.env.KV_LEADS.get<Lead>(key, 'json'));
-    const values = await Promise.all(kvPromises);
-    const items = values
-      .filter((value): value is Lead => value !== null)
-      .sort((a, b) => b.createdAt - a.createdAt);
-    console.log('[KV-LEADS GET] result count:', items.length);
-    return c.json({
-      success: true,
-      data: {
-        items,
-        next: listResult.list_complete ? null : listResult.cursor,
-      },
+    const leadPromises = listResult.keys.map(key => c.env.LEADS_KV.get<Lead>(key.name, 'json'));
+    const leads = (await Promise.all(leadPromises)).filter((lead): lead is Lead => lead !== null);
+    // Sort by creation date descending, as KV list is lexicographical
+    const sortedLeads = leads.sort((a, b) => b.createdAt - a.createdAt);
+    return ok({
+      items: sortedLeads,
+      next: listResult.list_complete ? null : listResult.cursor,
     });
-  } catch (e) {
-    console.error('[KV-LEADS GET list error]:', e);
-    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-    return c.json(
-      { success: false, error: `List error: ${errorMessage}` },
-      500
-    );
+  } catch (e: any) {
+    console.error('[LEADS GET ERROR]', e.message);
+    return bad('Failed to fetch leads', 500);
   }
 });
-
-// UPDATE LEAD (processed flag)
+// PATCH /api/leads/:id - Update a lead (e.g., mark as processed)
 app.patch('/:id', async (c) => {
   const id = c.req.param('id');
-  const key = `lead:${id}`;
-  if (!c.env?.KV_LEADS) {
-    console.log(`[KV_LEADS MISSING - PATCH ${id}]`);
-    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
-  }
+  console.log(`[PAGES FUNCTIONS LEADS PATCH] ID: ${id}`);
   try {
-    const existingLead = await c.env.KV_LEADS.get<Lead>(key, 'json');
+    const { processed } = await c.req.json<{ processed?: boolean }>();
+    if (typeof processed !== 'boolean') {
+      return bad('Invalid "processed" field', 400);
+    }
+    const key = `lead:${id}`;
+    const existingLead = await c.env.LEADS_KV.get<Lead>(key, 'json');
     if (!existingLead) {
-      return c.json({ success: false, error: 'Not Found' }, 404);
+      return bad('Lead not found', 404);
     }
-
-    // Parse raw JSON body
-    const rawPatch = await c.req.text();
-    let parsedPatch: unknown;
-    try {
-      parsedPatch = JSON.parse(rawPatch);
-    } catch {
-      return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-    }
-
-    const patchResult = PatchSchema.safeParse(parsedPatch);
-    if (!patchResult.success) {
-      const errMsg =
-        patchResult.error.errors[0]?.message ?? 'Validation failed';
-      return c.json({ success: false, error: errMsg }, 400);
-    }
-
-    const { processed } = patchResult.data;
     const updatedLead: Lead = { ...existingLead, processed };
-    await c.env.KV_LEADS.put(key, JSON.stringify(updatedLead));
-    return c.json({ success: true, data: updatedLead });
-  } catch (e) {
-    console.error(`[KV-LEADS PATCH /:id] error for id ${id}:`, e);
-    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-    return c.json(
-      { success: false, error: `Update failed: ${errorMessage}` },
-      500
-    );
+    await c.env.LEADS_KV.put(key, JSON.stringify(updatedLead));
+    return ok(updatedLead);
+  } catch (e: any) {
+    console.error(`[LEADS PATCH ERROR] ID: ${id}`, e.message);
+    return bad('Failed to update lead', 500);
   }
 });
-
-// DELETE LEAD
+// DELETE /api/leads/:id - Delete a lead
 app.delete('/:id', async (c) => {
   const id = c.req.param('id');
-  const key = `lead:${id}`;
-  if (!c.env?.KV_LEADS) {
-    console.log(`[KV_LEADS MISSING - DELETE ${id}]`);
-    return c.json({ success: false, error: 'KV_LEADS binding missing' }, 503);
-  }
+  console.log(`[PAGES FUNCTIONS LEADS DELETE] ID: ${id}`);
   try {
-    await c.env.KV_LEADS.delete(key);
-    return c.json({ success: true, data: { deleted: true } });
-  } catch (e) {
-    console.error(`[KV-LEADS DELETE /:id] error for id ${id}:`, e);
-    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-    return c.json(
-      { success: false, error: `Delete failed: ${errorMessage}` },
-      500
-    );
+    const key = `lead:${id}`;
+    await c.env.LEADS_KV.delete(key);
+    return ok({ deleted: true });
+  } catch (e: any) {
+    console.error(`[LEADS DELETE ERROR] ID: ${id}`, e.message);
+    return bad('Failed to delete lead', 500);
   }
 });
-
-export const onRequest = app.fetch;
-//
+// The `onRequest` handler is the entry point for Pages Functions.
+export const onRequest: PagesFunction<Env> = async (context) => {
+  return app.fetch(context.request, context.env, context);
+};

@@ -34,20 +34,32 @@ This project uses npm as the recommended package manager.
 ## Deployment to Cloudflare (Production Workflow)
 This project is a "Workers Site," deploying a static React frontend and a Worker API backend.
 1.  **Log in to Wrangler**: `npx wrangler login`.
-2.  **Deploy the full application (Frontend + Worker API)**: `npm run deploy`.
+2.  **Deploy the full application (Frontend + Worker API)**: `npm run deploy-worker`.
     -   This command builds the React app and deploys it along with the Worker (`worker/index.ts`) to your Cloudflare account.
     -   The API is powered by a Cloudflare Worker using a Durable Object (`LeadEntity`) for stateful storage.
     -   **NO Pages Functions needed** (delete `/functions/api/leads` if it exists); the Worker is the primary backend via `run_worker_first: ["/api/*"]` in `wrangler.jsonc`.
-3.  **Deploy Worker API only**: `npm run deploy-worker`.
-    -   Use this command for API-only updates. It deploys the Worker backend without rebuilding the static frontend assets, which is faster for backend changes.
 -   **Configuration Note**: The `wrangler.jsonc` file is pre-configured with the necessary `GlobalDurableObject` binding and a `v1` migration, ensuring the Durable Object is ready for production use.
+
+### Pages Functions Backend (Fixes Prod /api/leads SPA Fallback)
+
+To fix potential issues where Pages serves the SPA instead of the API for `/api/leads` routes in production, using Pages Functions is the recommended approach.
+
+1.  **KV Binding Setup** (Dashboard):
+    -   Go to Cloudflare Dashboard > Pages > [Your Project] > Settings > Functions.
+    -   Add KV Binding: Variable=`LEADS_KV`, KV Namespace=[Create a new KV namespace or select an existing one].
+
+2.  **Local Development**:
+    ```bash
+    npm run pages-dev
+    ```
+
+3.  **Deploy to Production**:
+    ```bash
+    npm run pages-deploy
+    ```
+
 ### Testing the API
-Once deployed, you can test the production API endpoints. The `package.json` `test-api` script is pre-configured for `https://securitycheck.vonbusch.app`.
-**Run the automated test script:**
-```bash
-npm run test-api
-```
-This will test the health, creation, and deletion of a lead.
+Once deployed, you can test the production API endpoints. Expect `[PAGES FUNCTIONS LEADS HIT]` logs in your Cloudflare dashboard to confirm the function is being invoked correctly.
 **Manual API Tests (using `curl`):**
 Replace `LEAD_ID` with an actual ID from the admin dashboard for PATCH and DELETE tests.
 1.  **Health Check**
@@ -85,7 +97,7 @@ Replace `LEAD_ID` with an actual ID from the admin dashboard for PATCH and DELET
 ## Production Checklist
 Before going live, ensure:
 - [ ] The `npm run deploy` command completes successfully.
-- [ ] The admin login credentials (`admin` / `wmG7V6BNifmGjv7rEkh2`) are noted securely.
+- [ ] The admin login credentials (`admin` / `wmG7V6BNifmGjv7rEkh2`) are noted securely and changed if necessary.
 - [ ] The funnel has been tested end-to-end in both German and English on the deployed URL.
 - [ ] The Admin dashboard at `/admin` loads leads without any 500 errors.
 - [ ] PDF report generation works as expected.
