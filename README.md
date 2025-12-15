@@ -32,11 +32,14 @@ This project uses npm as the recommended package manager.
 - **Build for Production**: `npm run build` – Outputs to `dist/` for deployment.
 - **Lint Code**: `npm run lint` – Runs ESLint on the codebase.
 ## Deployment to Cloudflare (Production Workflow)
-This project is a "Workers Site," deploying a static React frontend and a Worker API backend in a single step.
+This project is a "Workers Site," deploying a static React frontend and a Worker API backend.
 1.  **Log in to Wrangler**: `npx wrangler login`.
-2.  **Deploy the application**: `npm run deploy`.
+2.  **Deploy the full application (Frontend + Worker API)**: `npm run deploy`.
     -   This command builds the React app and deploys it along with the Worker (`worker/index.ts`) to your Cloudflare account.
-    -   The API is powered by a Cloudflare Worker using a Durable Object (`LeadEntity`) for stateful storage. No external database or KV binding is required for the leads functionality.
+    -   The API is powered by a Cloudflare Worker using a Durable Object (`LeadEntity`) for stateful storage.
+3.  **Deploy Worker API only**: `npm run deploy-worker`.
+    -   Use this command for API-only updates. It deploys the Worker backend without rebuilding the static frontend assets, which is faster for backend changes.
+-   **Configuration Note**: The `wrangler.jsonc` file is pre-configured with the necessary `GlobalDurableObject` binding and a `v1` migration, ensuring the Durable Object is ready for production use.
 ### Testing the API
 Once deployed, you can test the API endpoints. Replace `your-worker-url.workers.dev` with your actual Worker URL.
 **Create a new lead:**
@@ -57,6 +60,7 @@ curl -X POST https://your-worker-url.workers.dev/api/leads \
 ```bash
 curl https://your-worker-url.workers.dev/api/leads
 ```
+**Production Test**: After running `npm run deploy-worker`, you can verify the deployment by checking the logs for your Worker in the Cloudflare dashboard. The first `curl` request to `/api/leads` should produce logs confirming the Worker is active (e.g., `[WORKER HIT /api/leads POST]`). This confirms the API is running on the Durable Object backend as intended.
 ## Production Checklist
 Before going live, ensure:
 - [ ] The `npm run deploy` command completes successfully.
