@@ -4,7 +4,7 @@ import PlausibleLoader from '@/components/PlausibleLoader';
 import { LangToggle } from '@/components/LangToggle';
 import { Toaster } from '@/components/ui/sonner';
 import { useTheme } from '@/hooks/use-theme';
-import { useCurrentLang } from '@/stores/useLangStore';
+import { useLangStore } from '@/stores/useLangStore';
 interface LayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -19,7 +19,7 @@ export function Layout({
   description = defaultDescription,
 }: LayoutProps) {
   const { isDark } = useTheme();
-  const lang = useCurrentLang();
+  const lang = useLangStore((state) => state.lang);
   useEffect(() => {
     // PWA Service Worker Registration (disabled in dev mode)
     if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
