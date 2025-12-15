@@ -42,27 +42,46 @@ This project is a "Workers Site," deploying a static React frontend and a Worker
     -   Use this command for API-only updates. It deploys the Worker backend without rebuilding the static frontend assets, which is faster for backend changes.
 -   **Configuration Note**: The `wrangler.jsonc` file is pre-configured with the necessary `GlobalDurableObject` binding and a `v1` migration, ensuring the Durable Object is ready for production use.
 ### Testing the API
-Once deployed, you can test the API endpoints. First, replace the placeholder URL in `package.json`'s `test-api` script with your actual Worker URL (e.g., `your-project.pages.dev`).
+Once deployed, you can test the production API endpoints. The `package.json` `test-api` script is pre-configured for `https://securitycheck.vonbusch.app`.
 **Run the automated test script:**
 ```bash
 npm run test-api
 ```
-This will test the health, creation, and retrieval of leads.
-**Manual Test (Create a new lead):**
-```bash
-curl -X POST https://your-project.pages.dev/api/leads \
--H "Content-Type: application/json" \
--d '{
-  "company": "Test Inc.",
-  "contact": "John Doe",
-  "email": "john@test.com",
-  "phone": "+123456789",
-  "employeesRange": "51-200",
-  "consent": true,
-  "scoreSummary": {"areaA": 4, "areaB": 2, "areaC": 5, "average": 3.67}
-}'
-```
-**Production Test**: After running `npm run deploy`, you can verify the deployment by checking the logs for your Worker in the Cloudflare dashboard. The first `curl` request to `/api/leads` should produce logs confirming the Worker is active (e.g., `[WORKER HIT /api/leads POST]`). This confirms the API is running on the Durable Object backend as intended.
+This will test the health, creation, and deletion of a lead.
+**Manual API Tests (using `curl`):**
+Replace `LEAD_ID` with an actual ID from the admin dashboard for PATCH and DELETE tests.
+1.  **Health Check**
+    ```bash
+    curl https://securitycheck.vonbusch.app/api/health
+    ```
+2.  **Create a new lead**
+    ```bash
+    curl -X POST https://securitycheck.vonbusch.app/api/leads \
+    -H "Content-Type: application/json" \
+    -d '{
+      "company": "Test Inc.",
+      "contact": "John Doe",
+      "email": "john@test.com",
+      "phone": "+123456789",
+      "employeesRange": "51-200",
+      "consent": true,
+      "scoreSummary": {"areaA": 4, "areaB": 2, "areaC": 5, "average": 3.67}
+    }'
+    ```
+3.  **List Leads**
+    ```bash
+    curl https://securitycheck.vonbusch.app/api/leads?limit=5
+    ```
+4.  **Update a Lead (Mark as Processed)**
+    ```bash
+    curl -X PATCH https://securitycheck.vonbusch.app/api/leads/LEAD_ID \
+    -H "Content-Type: application/json" \
+    -d '{"processed": true}'
+    ```
+5.  **Delete a Lead**
+    ```bash
+    curl -X DELETE https://securitycheck.vonbusch.app/api/leads/LEAD_ID
+    ```
 ## Production Checklist
 Before going live, ensure:
 - [ ] The `npm run deploy` command completes successfully.
