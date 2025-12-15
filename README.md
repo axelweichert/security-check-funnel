@@ -37,14 +37,20 @@ This project is a "Workers Site," deploying a static React frontend and a Worker
 2.  **Deploy the full application (Frontend + Worker API)**: `npm run deploy`.
     -   This command builds the React app and deploys it along with the Worker (`worker/index.ts`) to your Cloudflare account.
     -   The API is powered by a Cloudflare Worker using a Durable Object (`LeadEntity`) for stateful storage.
+    -   **NO Pages Functions needed** (delete `/functions/api/leads` if it exists); the Worker is the primary backend via `run_worker_first: ["/api/*"]` in `wrangler.jsonc`.
 3.  **Deploy Worker API only**: `npm run deploy-worker`.
     -   Use this command for API-only updates. It deploys the Worker backend without rebuilding the static frontend assets, which is faster for backend changes.
 -   **Configuration Note**: The `wrangler.jsonc` file is pre-configured with the necessary `GlobalDurableObject` binding and a `v1` migration, ensuring the Durable Object is ready for production use.
 ### Testing the API
-Once deployed, you can test the API endpoints. Replace `your-worker-url.workers.dev` with your actual Worker URL.
-**Create a new lead:**
+Once deployed, you can test the API endpoints. First, replace the placeholder URL in `package.json`'s `test-api` script with your actual Worker URL (e.g., `your-project.pages.dev`).
+**Run the automated test script:**
 ```bash
-curl -X POST https://your-worker-url.workers.dev/api/leads \
+npm run test-api
+```
+This will test the health, creation, and retrieval of leads.
+**Manual Test (Create a new lead):**
+```bash
+curl -X POST https://your-project.pages.dev/api/leads \
 -H "Content-Type: application/json" \
 -d '{
   "company": "Test Inc.",
@@ -56,16 +62,13 @@ curl -X POST https://your-worker-url.workers.dev/api/leads \
   "scoreSummary": {"areaA": 4, "areaB": 2, "areaC": 5, "average": 3.67}
 }'
 ```
-**List leads:**
-```bash
-curl https://your-worker-url.workers.dev/api/leads
-```
-**Production Test**: After running `npm run deploy-worker`, you can verify the deployment by checking the logs for your Worker in the Cloudflare dashboard. The first `curl` request to `/api/leads` should produce logs confirming the Worker is active (e.g., `[WORKER HIT /api/leads POST]`). This confirms the API is running on the Durable Object backend as intended.
+**Production Test**: After running `npm run deploy`, you can verify the deployment by checking the logs for your Worker in the Cloudflare dashboard. The first `curl` request to `/api/leads` should produce logs confirming the Worker is active (e.g., `[WORKER HIT /api/leads POST]`). This confirms the API is running on the Durable Object backend as intended.
 ## Production Checklist
 Before going live, ensure:
 - [ ] The `npm run deploy` command completes successfully.
 - [ ] The admin login credentials (`admin` / `wmG7V6BNifmGjv7rEkh2`) are noted securely.
 - [ ] The funnel has been tested end-to-end in both German and English on the deployed URL.
+- [ ] The Admin dashboard at `/admin` loads leads without any 500 errors.
 - [ ] PDF report generation works as expected.
 - [ ] PWA installation and offline functionality are verified.
 - [ ] Plausible analytics domain (`check.vonbusch.digital`) is correctly configured if used.
