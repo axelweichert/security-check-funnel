@@ -1,5 +1,5 @@
 import { Progress } from "@/components/ui/progress";
-import { motion } from "framer-motion";
+
 import { cn } from "@/lib/utils";
 interface ProgressStepperProps {
   currentStep: number;
@@ -14,26 +14,20 @@ const steps = [
 export function ProgressStepper({ currentStep, totalSteps, stepTitle }: ProgressStepperProps) {
   const progressValue = ((currentStep + 1) / totalSteps) * 100;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto space-y-4"
-    >
+    <div className="w-full max-w-3xl mx-auto space-y-4 animate-in fade-in slide-in-from-top duration-500">
       <div className="hidden md:flex justify-between items-center relative px-2">
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2" />
         <div className="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2" style={{ width: `${(currentStep / (totalSteps - 1)) * 100}%`, transition: 'width 0.5s ease-out' }} />
         {steps.map((step) => (
           <div key={step.index} className="relative z-10 flex flex-col items-center">
-            <motion.div
-              whileHover={{ scale: 1.1 }}
+            <div
               className={cn(
-                "h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300",
+                "h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 hover:scale-110",
                 currentStep >= step.index ? "bg-primary text-primary-foreground shadow-primary" : "bg-muted text-muted-foreground"
               )}
             >
               {step.index + 1}
-            </motion.div>
+            </div>
             <span className={cn("text-xs mt-2 transition-colors duration-300", currentStep >= step.index ? "text-foreground font-semibold" : "text-muted-foreground")}>
               {step.title}
             </span>
@@ -47,6 +41,6 @@ export function ProgressStepper({ currentStep, totalSteps, stepTitle }: Progress
         </div>
         <Progress value={progressValue} className="w-full h-2" />
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -14,7 +14,7 @@ import { Shield, AlertTriangle, CheckCircle, Search, LogOut, Loader2, Trash2, Ey
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+
 import { Footer } from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { useCurrentLang } from '@/stores/useLangStore';
@@ -331,19 +331,19 @@ export function AdminPage() {
             <CardHeader><CardTitle>{t(lang, 'chartTitle')}</CardTitle></CardHeader>
             <CardContent>
               {isLoading && <Skeleton className="h-64 w-full" />}
-              {chartData.length > 0 ? (
-                <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                        {chartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </motion.div>
-              ) : !isLoading && (<div className="h-64 flex items-center justify-center text-muted-foreground">{t(lang, 'chartNoData')}</div>)}
+{chartData.length > 0 ? (
+  <div className="animate-in fade-in duration-500">
+    <ResponsiveContainer width="100%" height={250}>
+      <PieChart>
+        <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+          {chartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+) : !isLoading && (<div className="h-64 flex items-center justify-center text-muted-foreground">{t(lang, 'chartNoData')}</div>)}
             </CardContent>
           </Card>
         </div>

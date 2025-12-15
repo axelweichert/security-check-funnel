@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
 import { Footer } from '@/components/Footer';
@@ -11,12 +11,9 @@ interface ThanksScreenProps {
 const ThanksScreenComponent = ({ onReset }: ThanksScreenProps) => {
   const lang = useCurrentLang();
   return (
-    <motion.div
+    <div
       key="thanks"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-      className="text-center max-w-2xl mx-auto space-y-6 py-16"
+      className="text-center max-w-2xl mx-auto space-y-6 py-16 animate-in fade-in scale-in-95 duration-500"
     >
       <CheckCircle className="w-16 h-16 text-green-500 mx-auto shadow-soft rounded-full" />
       <h2 className="text-4xl font-bold font-display">{t(lang, 'thanksHeadline')}</h2>
@@ -35,7 +32,7 @@ const ThanksScreenComponent = ({ onReset }: ThanksScreenProps) => {
         </Button>
       </div>
       <Footer />
-    </motion.div>
+    </div>
   );
 };
 export const ThanksScreen = React.memo(ThanksScreenComponent);

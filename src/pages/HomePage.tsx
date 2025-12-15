@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { AnimatePresence } from 'framer-motion';
+
 import { LeadForm } from '@/components/funnel/LeadForm';
 import {
   useFunnelStore,
@@ -165,12 +165,10 @@ export function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12">
-        {/* AnimatePresence handles the smooth transitions between funnel steps. */}
-        <AnimatePresence mode="wait">
-          <div key={step} className="w-full">
-            {renderContent()}
-          </div>
-        </AnimatePresence>
+        {/* Simple wrapper for step content without animation */}
+        <div key={step} className="w-full">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
