@@ -109,69 +109,105 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // ---------------------------------------------------------------------------
   // Create a new lead
   app.post("/api/leads", async (c) => {
-    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
-    const body = (await c.req.json()) as Partial<Lead>;
-    const { company, contact, employeesRange, phone, email, consent } = body;
-    // Validate required fields
-    if (
-      !company?.trim() ||
-      !contact?.trim() ||
-      !employeesRange?.trim() ||
-      !phone?.trim() ||
-      !email?.trim() ||
-      consent !== true
-    ) {
-      return bad(c, "invalid lead data");
+    console.log('[WORKER HIT /api/leads POST]');
+    try {
+      console.log('[DO BINDING]', c.env.GlobalDurableObject ? 'OK' : 'MISSING');
+      const body = (await c.req.json()) as Partial<Lead>;
+      const { company, contact, employeesRange, phone, email, consent } = body;
+      // Validate required fields
+      if (
+        !company?.trim() ||
+        !contact?.trim() ||
+        !employeesRange?.trim() ||
+        !phone?.trim() ||
+        !email?.trim() ||
+        consent !== true
+      ) {
+        return bad(c, "invalid lead data");
+      }
+      const newLead: Lead = {
+        ...(body as Lead),
+        id: crypto.randomUUID(),
+        createdAt: Date.now(),
+        processed: false,
+        company: company.trim(),
+        contact: contact.trim(),
+        employeesRange: employeesRange.trim(),
+        phone: phone.trim(),
+        email: email.trim().toLowerCase(),
+        consent: true,
+        scoreSummary:
+          body.scoreSummary ??
+          LeadEntity.initialState?.scoreSummary ?? { areaA: 0, areaB: 0, areaC: 0, average: 0 },
+      };
+      const created = await LeadEntity.create(c.env, newLead);
+      console.log('[CREATE OK]');
+      return ok(c, created);
+    } catch (e: any) {
+      console.error('[LEADS POST ERROR FULLSTACK]', e?.stack || e);
+      console.error('[LEADS POST ERROR]', e?.message);
+      return bad(c, "Failed to create lead");
     }
-    const newLead: Lead = {
-      ...(body as Lead),
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      processed: false,
-      company: company.trim(),
-      contact: contact.trim(),
-      employeesRange: employeesRange.trim(),
-      phone: phone.trim(),
-      email: email.trim().toLowerCase(),
-      consent: true,
-      scoreSummary:
-        body.scoreSummary ?? LeadEntity.initialState?.scoreSummary ?? { areaA: 0, areaB: 0, areaC: 0, average: 0 },
-    };
-    const created = await LeadEntity.create(c.env, newLead);
-    return ok(c, created);
   });
   // List leads with pagination, newest first
   app.get("/api/leads", async (c) => {
-    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
-    await LeadEntity.ensureSeed(c.env);
-    const cursor = c.req.query("cursor");
-    const limit = c.req.query("limit");
-    const page = await LeadEntity.list(
-      c.env,
-      cursor ?? null,
-      limit ? Math.max(1, Number(limit) | 0) : undefined
-    );
-    const sortedItems = (page.items ?? []).slice().sort(
-      (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)
-    );
-    return ok(c, { items: sortedItems, next: page.next });
+    console.log('[WORKER HIT /api/leads GET]');
+    try {
+      console.log('[DO BINDING]', c.env.GlobalDurableObject ? 'OK' : 'MISSING');
+      await LeadEntity.ensureSeed(c.env);
+      console.log('[ENSURE SEED OK]');
+      const cursor = c.req.query("cursor");
+      const limit = c.req.query("limit");
+      console.log('[ABOUT TO LIST LEADS]', { cursor, limit });
+      const page = await LeadEntity.list(
+        c.env,
+        cursor ?? null,
+        limit ? Math.max(1, Number(limit) | 0) : undefined
+      );
+      console.log('[LIST OK]', page.items?.length || 0);
+      const sortedItems = (page.items ?? []).slice().sort(
+        (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)
+      );
+      return ok(c, { items: sortedItems, next: page.next });
+    } catch (error: any) {
+      console.error('[LEADS GET ERROR FULLSTACK]', error?.stack || error);
+      console.error('[LEADS GET ERROR]', error?.message);
+      return ok(c, { items: [], next: null });
+    }
   });
   // Update a lead (e.g., mark as processed)
   app.patch("/api/leads/:id", async (c) => {
-    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
-    const id = c.req.param("id");
-    const { processed } = (await c.req.json()) as { processed?: boolean };
-    const lead = new LeadEntity(c.env, id);
-    if (!(await lead.exists())) return notFound(c, "Lead not found");
-    await lead.mutate((s) => ({ ...s, processed }));
-    return ok(c, await lead.getState());
+    console.log('[WORKER HIT /api/leads PATCH]');
+    try {
+      console.log('[DO BINDING]', c.env.GlobalDurableObject ? 'OK' : 'MISSING');
+      const id = c.req.param("id");
+      const { processed } = (await c.req.json()) as { processed?: boolean };
+      const lead = new LeadEntity(c.env, id);
+      const exists = await lead.exists();
+      console.log('[LEAD EXISTS?]', exists);
+      if (!exists) return notFound(c, "Lead not found");
+      await lead.mutate((s) => ({ ...s, processed }));
+      return ok(c, await lead.getState());
+    } catch (e: any) {
+      console.error('[LEADS PATCH ERROR FULLSTACK]', e?.stack || e);
+      console.error('[LEADS PATCH ERROR]', e?.message);
+      return bad(c, "patch fail");
+    }
   });
   // Delete a lead
   app.delete("/api/leads/:id", async (c) => {
-    console.log('[WORKER LEADS Fallback] ' + c.req.method + ' ' + c.req.path);
-    const id = c.req.param("id");
-    const deleted = await LeadEntity.delete(c.env, id);
-    return ok(c, { deleted });
+    try {
+      console.log('[DO BINDING]', c.env.GlobalDurableObject ? 'OK' : 'MISSING');
+      const id = c.req.param("id");
+      const lead = new LeadEntity(c.env, id);
+      console.log('[BEFORE DELETE EXISTS]', await lead.exists());
+      const deleted = await LeadEntity.delete(c.env, id);
+      return ok(c, { deleted });
+    } catch (e: any) {
+      console.error('[LEADS DELETE ERROR FULLSTACK]', e?.stack || e);
+      console.error('[LEADS DELETE ERROR]', e?.message);
+      return bad(c, "delete fail");
+    }
   });
 }
 //
